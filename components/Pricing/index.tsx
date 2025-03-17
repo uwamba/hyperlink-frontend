@@ -8,7 +8,7 @@ const Pricing = () => {
   const [isMonthly, setIsMonthly] = useState(true);
 
   return (
-    <section id="pricing" className="relative z-10 py-16 md:py-20 lg:py-28">
+    <section id="Pricing" className="relative mx-auto py-16 md:py-20 lg:py-28 w-[90%] sm:w-[80%] md:w-[70%] ">
       <div className="container">
         <SectionTitle
           title="Simple and Affordable Pricing"
@@ -62,43 +62,37 @@ const Pricing = () => {
 
         <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
           <PricingBox
-            packageName="Lite"
+            packageName="Home"
             price={isMonthly ? "40" : "120"}
             duration={isMonthly ? "mo" : "yr"}
-            subtitle="Lorem ipsum dolor sit amet adiscing elit Mauris egestas enim."
+            subtitle="This offer is recommande for up to 10 users"
           >
-            <OfferList text="All UI Components" status="active" />
-            <OfferList text="Use with Unlimited Projects" status="active" />
-            <OfferList text="Commercial Use" status="active" />
-            <OfferList text="Email Support" status="active" />
-            <OfferList text="Lifetime Access" status="inactive" />
-            <OfferList text="Free Lifetime Updates" status="inactive" />
+            <OfferList text="Speed: 12mbps" status="active" />
+            <OfferList text="Data cap : unlimitted" status="active" />
+            <OfferList text="Best For: Home" status="active" />
+            <OfferList text="Support :24/7" status="active" />
           </PricingBox>
           <PricingBox
             packageName="Basic"
             price={isMonthly ? "399" : "789"}
             duration={isMonthly ? "mo" : "yr"}
-            subtitle="Lorem ipsum dolor sit amet adiscing elit Mauris egestas enim."
+            subtitle="This offer is recommande for up to 20 users"
           >
-            <OfferList text="All UI Components" status="active" />
-            <OfferList text="Use with Unlimited Projects" status="active" />
-            <OfferList text="Commercial Use" status="active" />
-            <OfferList text="Email Support" status="active" />
-            <OfferList text="Lifetime Access" status="active" />
-            <OfferList text="Free Lifetime Updates" status="inactive" />
+            <OfferList text="Speed: 12mbps" status="active" />
+            <OfferList text="Data cap : unlimitted" status="active" />
+            <OfferList text="Best For: Home" status="active" />
+            <OfferList text="Support :24/7" status="active" />
           </PricingBox>
           <PricingBox
-            packageName="Plus"
+            packageName="Business"
             price={isMonthly ? "589" : "999"}
             duration={isMonthly ? "mo" : "yr"}
-            subtitle="Lorem ipsum dolor sit amet adiscing elit Mauris egestas enim."
+            subtitle="This offer is recommande for up to 30 users"
           >
-            <OfferList text="All UI Components" status="active" />
-            <OfferList text="Use with Unlimited Projects" status="active" />
-            <OfferList text="Commercial Use" status="active" />
-            <OfferList text="Email Support" status="active" />
-            <OfferList text="Lifetime Access" status="active" />
-            <OfferList text="Free Lifetime Updates" status="active" />
+            <OfferList text="Speed: 12mbps" status="active" />
+            <OfferList text="Data cap : unlimitted" status="active" />
+            <OfferList text="Best For: Home" status="active" />
+            <OfferList text="Support :24/7" status="active" />
           </PricingBox>
         </div>
       </div>

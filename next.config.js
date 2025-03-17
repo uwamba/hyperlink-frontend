@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export', // Enable static export
   images: {
     domains: ["localhost"],
     remotePatterns: [
@@ -12,4 +13,7 @@ const nextConfig = {
   },
 };
 
+
 module.exports = nextConfig;
+
+

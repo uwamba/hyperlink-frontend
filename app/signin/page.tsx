@@ -34,7 +34,7 @@ export default function SignInPage() {
       console.log(data)
 
       // Redirect to dashboard
-      router.push("/dashboard");
+      router.push("/admin/dashboard");
     } catch (err: any) {
       setError(err.message);
     }

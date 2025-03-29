@@ -5,7 +5,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-export default function UnpaidInvoices() {
+export default function PaidInvoices() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +70,7 @@ export default function UnpaidInvoices() {
     if (!authToken) return;
 
     try {
-      const response = await fetch(`${API_URL}/invoices/unpaid`, {
+      const response = await fetch(`${API_URL}/invoices/paid`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       const responseData = await response.json();
@@ -144,7 +144,7 @@ export default function UnpaidInvoices() {
   return (
     <DashboardLayout>
       <div className="container mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-4">Unpaid Invoices</h2>
+        <h2 className="text-2xl font-bold mb-4">Paid Invoices</h2>
         {error && <p className="text-red-500">{error}</p>}
         {loading ? (
           <p>Loading...</p>
@@ -153,6 +153,7 @@ export default function UnpaidInvoices() {
             <thead className="bg-gray-800 text-white">
               <tr>
                 <th className="border px-4 py-2">Invoice No</th>
+                <th className="border px-4 py-2">Client ID</th>
                 <th className="border px-4 py-2">Amount</th>
                 <th className="border px-4 py-2">Due Date</th>
                 <th className="border px-4 py-2">Status</th>
@@ -164,6 +165,7 @@ export default function UnpaidInvoices() {
                 invoices.map((invoice) => (
                   <tr key={invoice.id} className="border hover:bg-gray-100">
                     <td className="border px-4 py-2">{invoice.invoice_no}</td>
+                    <td className="border px-4 py-2">{invoice.client_id}</td>
                     <td className="border px-4 py-2">
                       Ksh {parseFloat(invoice.amount).toLocaleString()}
                     </td>
@@ -182,7 +184,7 @@ export default function UnpaidInvoices() {
                       </span>
                     </td>
                     <td className="border px-4 py-2 flex gap-2">
-                    <button 
+                      <button 
                       onClick={() => handleGenerateInvoice(invoice.id)}
                       className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
                         View Invoice 

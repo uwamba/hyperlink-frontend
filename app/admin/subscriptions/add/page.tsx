@@ -13,6 +13,7 @@ export default function SubscribeClient() {
     plan_id: "",
     start_date: "",
     end_date: "",
+    billing_date: "", // Added billing_date
     status: "active", // Default to 'active'
   });
 
@@ -97,6 +98,7 @@ export default function SubscribeClient() {
         plan_id: "",
         start_date: "",
         end_date: "",
+        billing_date: "", // Reset billing_date
         status: "active",
       });
     } catch (err) {
@@ -185,19 +187,17 @@ export default function SubscribeClient() {
             </div>
 
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                Status
+              <label htmlFor="billing_date" className="block text-sm font-medium text-gray-700">
+                Billing Date
               </label>
-              <select
-                name="status"
-                value={formData.status}
+              <input
+                type="date"
+                name="billing_date"
+                value={formData.billing_date}
                 onChange={handleChange}
                 required
                 className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              />
             </div>
 
             <button

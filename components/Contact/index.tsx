@@ -1,6 +1,42 @@
+"use client";
 import NewsLatterBox from "./NewsLatterBox";
+import React, { useState } from "react";
 
-const Contact = () => {
+  export default function Contact() {
+    const [clientName, setClientName] = useState("");
+    const [clientEmail, setClientEmail] = useState("");
+    const [clientPhone, setClientPhone] = useState("");
+    const [inquiry, setInquiry] = useState("");
+    const [error, setError] = useState("");
+  
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+  
+      try {
+        const response = await fetch("/api/support", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            client_name: clientName,
+            client_email: clientEmail,
+            client_phone: clientPhone,
+            inquiry: inquiry,
+          }),
+        });
+  
+        const data = await response.json();
+        if (response.ok) {
+          alert("Inquiry logged successfully!");
+        } else {
+          setError(data.message || "An error occurred.");
+        }
+      } catch (err) {
+        setError("Failed to submit inquiry.");
+      }
+    };
+  
   return (
     <section
       id="Support"
@@ -50,6 +86,21 @@ const Contact = () => {
                     />
                   </div>
                 </div>
+                <div className="w-full px-4 md:w-1/2">
+                  <div className="mb-8">
+                    <label
+                      htmlFor="phone"
+                      className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                    >
+                      Your Phone
+                    </label>
+                    <input
+                      type="phone"
+                      placeholder="Enter your phone"
+                      className="border-stroke dark:text-body-color-dark dark:shadow-two w-full rounded-sm border bg-[#f8f8f8] px-6 py-3 text-base text-body-color outline-none focus:border-primary dark:border-transparent dark:bg-[#2C303B] dark:focus:border-primary"
+                    />
+                  </div>
+                </div>
                 <div className="w-full px-4">
                   <div className="mb-8">
                     <label
@@ -80,4 +131,5 @@ const Contact = () => {
   );
 };
 
-export default Contact;
+
+

@@ -96,11 +96,17 @@ export default function SubscribeClient() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const handleGenerateInvoice = async (subscriptionId) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setError("Authentication required. Please log in.");
+    }
+    setAuthToken(token);
     try {
       // Fetch the PDF from the backend
       const response = await fetch(`${API_URL}/generate-invoice/${subscriptionId}`, {
         method: 'POST',
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -199,7 +205,9 @@ export default function SubscribeClient() {
                     <th className="px-4 py-2 text-left font-medium text-gray-800">Plan</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-800">Start Date</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-800">End Date</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-800"> Billing Date</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-800">Status</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-800">Current Invoice</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -228,6 +236,7 @@ export default function SubscribeClient() {
                       </td>
                       <td className="px-4 py-2">{subscription.start_date}</td>
                       <td className="px-4 py-2">{subscription.end_date}</td>
+                      <td className="px-4 py-2">{subscription.billing_date}</td>
                       <td className="px-4 py-2">{subscription.status}</td>
                       <td>
                         <button
@@ -237,14 +246,7 @@ export default function SubscribeClient() {
                           Generate Invoice
                         </button>
                       </td>
-                      <td className="border px-4 py-2">
-                        <button
-                          onClick={() => handleOpenModal(subscription.client)}
-                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                        >
-                          View Invoices
-                        </button>
-                      </td>
+                      
                     </tr>
                   ))}
                 </tbody>

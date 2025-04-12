@@ -1,73 +1,90 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-interface Plan {
-  id: string;
-  name: string;
-  price: string;
-  duration: string;
-  description: string;
-}
-
-export default function PlansList() {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [loading, setLoading] = useState(false);
+export default function PaymentList() {
+  const [payments, setPayments] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPlans = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`${API_URL}/plans`);
-        const data = await response.json();
-        if (response.ok && Array.isArray(data.data)) {
-          setPlans(data.data); // Set the 'data' array
-        } else {
-          throw new Error("Invalid data format received.");
-        }
-        
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPlans();
+    fetchPayments();
   }, []);
+
+  const fetchPayments = async () => {
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      setError("Authentication required. Please log in.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/payments`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      const responseData = await response.json();
+
+      if (response.ok && Array.isArray(responseData.data)) {
+        setPayments(responseData.data);
+      } else {
+        throw new Error(responseData.message || "Invalid data format received.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-4">
-        <h2 className="text-2xl font-semibold mb-4">Plans List</h2>
-
+      <div className="container mx-auto p-6">
+        <h2 className="text-2xl font-bold mb-4">Payments List</h2>
         {error && <p className="text-red-500">{error}</p>}
-        {loading && <p>Loading...</p>}
-
-        <table className="min-w-full table-auto border-collapse border border-gray-300">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 text-left">Name</th>
-              <th className="px-4 py-2 text-left">Price</th>
-              <th className="px-4 py-2 text-left">Duration</th>
-              <th className="px-4 py-2 text-left">Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plans.map((plan) => (
-              <tr key={plan.id} className="border-b">
-                <td className="px-4 py-2">{plan.name}</td>
-                <td className="px-4 py-2">{plan.price}</td>
-                <td className="px-4 py-2">{plan.duration}</td>
-                <td className="px-4 py-2">{plan.description}</td>
+        {loading ? (
+          <p>Loading...</p>
+        ) : (
+          <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+            <thead className="bg-gray-800 text-white">
+              <tr>
+                <th className="border px-4 py-2">Client ID</th>
+                <th className="border px-4 py-2">Invoice ID</th>
+                <th className="border px-4 py-2">Amount Paid</th>
+                <th className="border px-4 py-2">Payment Method</th>
+                <th className="border px-4 py-2">Transaction ID</th>
+                <th className="border px-4 py-2">Payment Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white">
+              {payments.length > 0 ? (
+                payments.map((payment) => (
+                  <tr key={payment.id} className="border hover:bg-gray-100">
+                    <td className="border px-4 py-2">{payment.client_id}</td>
+                    <td className="border px-4 py-2">{payment.invoice_id}</td>
+                    <td className="border px-4 py-2">
+                      Ksh {parseFloat(payment.amount_paid).toLocaleString()}
+                    </td>
+                    <td className="border px-4 py-2">{payment.payment_method}</td>
+                    <td className="border px-4 py-2">{payment.transaction_id}</td>
+                    <td className="border px-4 py-2">{new Date(payment.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="text-center py-4">
+                    No payments found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </DashboardLayout>
   );

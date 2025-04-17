@@ -8,6 +8,7 @@ const SideNav = () => {
   const [isSubsOpen, setIsSubsOpen] = useState(false);
   const [isInvoicesOpen, setIsInvoicesOpen] = useState(false);
   const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
+  const [isStockOpen, setIsStockOpen] = useState(false);
   const [isJobsOpen, setIsJobsOpen] = useState(false);
   const [isUsersOpen, setIsUsersOpen] = useState(false);
   const [isSupportsOpen, setIsSupportsOpen] = useState(false);
@@ -209,6 +210,62 @@ const SideNav = () => {
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add</span>
                 </Link>
               </li>
+            </ul>
+          </li>
+        )}
+
+{(userRole === 'super_user' || userRole === 'sales') && (
+          <li>
+            <button
+              onClick={() => setIsStockOpen(!isStockOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Stock Management
+              <span className={`inline-block transition-transform duration-200 ${isStockOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isStockOpen ? "max-h-80 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+            <li>
+  <div className="group">
+    <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
+      Products
+    </span>
+    <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
+      <li>
+        <Link href="/admin/stock/products/add">
+          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Product</span>
+        </Link>
+      </li>
+      <li>
+        <Link href="/admin/stock/products/list">
+          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Products</span>
+        </Link>
+      </li>
+    </ul>
+  </div>
+</li>
+
+<li>
+  <div className="group">
+    <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
+      Items
+    </span>
+    <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
+      <li>
+        <Link href="/admin/stock/items/add">
+          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Item</span>
+        </Link>
+      </li>
+      <li>
+        <Link href="/admin/stock/items/list">
+          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Items</span>
+        </Link>
+      </li>
+    </ul>
+  </div>
+</li>
+
             </ul>
           </li>
         )}

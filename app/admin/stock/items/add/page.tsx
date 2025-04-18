@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export default function AddItem() {
+  const [products, setProducts] = useState<any[]>([]);
   const [form, setForm] = useState({
     name: "",
     serial_number: "",
@@ -17,9 +18,39 @@ export default function AddItem() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    setAuthToken(token);
+
+    if (!token) {
+      setMessage("Authentication required. Please log in.");
+      return;
+    }
+
+    // Fetch products
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${API_URL}/products`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = await res.json();
+        setProducts(data.data); // Assuming the API returns { data: [...] }
+      } catch (err) {
+        setMessage("Error fetching products.");
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -29,7 +60,6 @@ export default function AddItem() {
     setLoading(true);
     setMessage(null);
 
-    const authToken = localStorage.getItem("authToken");
     if (!authToken) {
       setMessage("Authentication required. Please log in.");
       setLoading(false);
@@ -76,17 +106,24 @@ export default function AddItem() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block font-medium mb-1">Name</label>
-            <input
-              type="text"
+            <label className="block font-medium mb-1">Product Name</label>
+            <select
               name="name"
               value={form.name}
               onChange={handleChange}
               className="w-full border px-4 py-2 rounded"
               required
-            />
+            >
+              <option value="">Select Product</option>
+              {products.map((product) => (
+                <option key={product.id} value={product.name}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
           </div>
 
+          {/* Remaining fields stay the same */}
           <div>
             <label className="block font-medium mb-1">Serial Number</label>
             <input

@@ -231,9 +231,10 @@ export default function OverdueInvoices() {
                 onChange={handlePaymentChange}
                 className="w-full p-2 border rounded mb-4"
               >
-                <option value="MPESA">MPESA</option>
+                <option value="MPESA">MOMO</option>
                 <option value="Bank Transfer">Bank Transfer</option>
-                <option value="PayPal">PayPal</option>
+                <option value="card">CARD</option>
+                <option value="cash">CASH</option>
               </select>
 
               <label className="block mb-2">Transaction ID</label>

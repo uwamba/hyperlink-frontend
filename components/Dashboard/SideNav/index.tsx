@@ -15,6 +15,9 @@ const SideNav = () => {
   const [userRole, setUserRole] = useState("");
   const [isExpensesOpen, setIsExpensesOpen] = useState(false);
   const [isSuppliersOpen, setIsSuppliersOpen] = useState(false);
+  const [isAssetsOpen, setIsAssetsOpen] = useState(false);
+  const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
+  const [isDeliveryNotesOpen, setIsDeliveryNotesOpen] = useState(false);
 
 
   useEffect(() => {
@@ -25,7 +28,8 @@ const SideNav = () => {
   }, []);
 
   return (
-    <nav className="w-64 bg-gray-800 text-white h-full p-4">
+    <nav className="w-64 bg-gray-800 text-white h-screen p-4 overflow-y-auto">
+
       <ul className="space-y-4">
         <li>
           <Link href="/admin/dashboard">
@@ -43,26 +47,53 @@ const SideNav = () => {
           </Link>
         </li>
 
-        {/* Conditionally render Users Management based on role */}
+        {/* Conditionally render Clients */}
         {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
-              onClick={() => setIsUsersOpen(!isUsersOpen)}
+              onClick={() => setIsClientsOpen(!isClientsOpen)}
               className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
             >
-              Users Management
-              <span className={`inline-block transition-transform duration-200 ${isUsersOpen ? "rotate-180" : "rotate-0"}`}>
+              Clients
+              <span className={`inline-block transition-transform duration-200 ${isClientsOpen ? "rotate-180" : "rotate-0"}`}>
                 <ChevronDownIcon className="w-5 h-5 inline-block" />
               </span>
             </button>
-            <ul className={`ml-6 space-y-2 ${isUsersOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+            <ul className={`ml-6 space-y-2 ${isClientsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
-                <Link href="/admin/user/list">
+                <Link href="/admin/clients/list">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
                 </Link>
               </li>
               <li>
-                <Link href="/admin/user/add">
+                <Link href="/admin/clients/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+
+        {/* Conditionally render Plans */}
+        {(userRole === 'super_user' || userRole === 'manager') && (
+          <li>
+            <button
+              onClick={() => setIsPlansOpen(!isPlansOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Plans
+              <span className={`inline-block transition-transform duration-200 ${isPlansOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isPlansOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/plans/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/plans/add">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
                 </Link>
               </li>
@@ -97,61 +128,8 @@ const SideNav = () => {
           </li>
         )}
 
-        {/* Conditionally render Subscriptions */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsExpensesOpen(!isExpensesOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Expenses
-              <span className={`inline-block transition-transform duration-200 ${isExpensesOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isExpensesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/expense/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/expense/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-         {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsSuppliersOpen(!isSuppliersOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Suppliers
-              <span className={`inline-block transition-transform duration-200 ${isSuppliersOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isSuppliersOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/supplier/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/supplier/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-
-
         {/* Conditionally render Invoices */}
-        {(userRole === 'super_user' || userRole === 'manager' || userRole === 'sales') && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsInvoicesOpen(!isInvoicesOpen)}
@@ -164,23 +142,13 @@ const SideNav = () => {
             </button>
             <ul className={`ml-6 space-y-2 ${isInvoicesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
-                <Link href="/admin/invoices/paid">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Paid Invoice</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/invoices/overdue">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Overdue Invoice</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/invoices/unpaid">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Pending Invoice</span>
+                <Link href="/admin/invoices/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
                 </Link>
               </li>
               <li>
                 <Link href="/admin/invoices/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Generate invoices</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
                 </Link>
               </li>
             </ul>
@@ -188,7 +156,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Payments */}
-        {(userRole === 'super_user' || userRole === 'sales') && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsPaymentsOpen(!isPaymentsOpen)}
@@ -207,14 +175,14 @@ const SideNav = () => {
               </li>
               <li>
                 <Link href="/admin/payments/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
                 </Link>
               </li>
             </ul>
           </li>
         )}
 
-{(userRole === 'super_user' || userRole === 'sales') && (
+        {(userRole === 'super_user' || userRole === 'sales') && (
           <li>
             <button
               onClick={() => setIsStockOpen(!isStockOpen)}
@@ -226,52 +194,51 @@ const SideNav = () => {
               </span>
             </button>
             <ul className={`ml-6 space-y-2 ${isStockOpen ? "max-h-80 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-            <li>
-  <div className="group">
-    <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
-      Products
-    </span>
-    <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
-      <li>
-        <Link href="/admin/stock/products/add">
-          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Product</span>
-        </Link>
-      </li>
-      <li>
-        <Link href="/admin/stock/products/list">
-          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Products</span>
-        </Link>
-      </li>
-    </ul>
-  </div>
-</li>
+              <li>
+                <div className="group">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
+                    Products
+                  </span>
+                  <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
+                    <li>
+                      <Link href="/admin/stock/products/add">
+                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Product</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/admin/stock/products/list">
+                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Products</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </li>
 
-<li>
-  <div className="group">
-    <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
-      Items
-    </span>
-    <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
-      <li>
-        <Link href="/admin/stock/items/add">
-          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Item</span>
-        </Link>
-      </li>
-      <li>
-        <Link href="/admin/stock/items/list">
-          <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Items</span>
-        </Link>
-      </li>
-    </ul>
-  </div>
-</li>
+              <li>
+                <div className="group">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
+                    Items
+                  </span>
+                  <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
+                    <li>
+                      <Link href="/admin/stock/items/add">
+                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Item</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/admin/stock/items/list">
+                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Items</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </li>
 
             </ul>
           </li>
         )}
-
         {/* Conditionally render Jobs */}
-        {userRole === 'super_user' && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsJobsOpen(!isJobsOpen)}
@@ -288,29 +255,204 @@ const SideNav = () => {
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
                 </Link>
               </li>
+              <li>
+                <Link href="/admin/jobs/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
+                </Link>
+              </li>
             </ul>
           </li>
         )}
 
-        {/* Support section visible to all roles */}
-        <li>
-          <button
-            onClick={() => setIsSupportsOpen(!isSupportsOpen)}
-            className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-          >
-            Support
-            <span className={`inline-block transition-transform duration-200 ${isSupportsOpen ? "rotate-180" : "rotate-0"}`}>
-              <ChevronDownIcon className="w-5 h-5 inline-block" />
-            </span>
-          </button>
-          <ul className={`ml-6 space-y-2 ${isSupportsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-            <li>
-              <Link href="/admin/support/list">
-                <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-              </Link>
-            </li>
-          </ul>
-        </li>
+        {/* Conditionally render Supports */}
+        {(userRole === 'super_user' || userRole === 'manager') && (
+          <li>
+            <button
+              onClick={() => setIsSupportsOpen(!isSupportsOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Supports
+              <span className={`inline-block transition-transform duration-200 ${isSupportsOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isSupportsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/supports/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/supports/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+
+        {/* Conditionally render Expenses */}
+        {(userRole === 'super_user' || userRole === 'manager') && (
+          <li>
+            <button
+              onClick={() => setIsExpensesOpen(!isExpensesOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Expenses
+              <span className={`inline-block transition-transform duration-200 ${isExpensesOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isExpensesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/expenses/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/expenses/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+
+        {/* Conditionally render Suppliers */}
+        {(userRole === 'super_user' || userRole === 'manager') && (
+          <li>
+            <button
+              onClick={() => setIsSuppliersOpen(!isSuppliersOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Suppliers
+              <span className={`inline-block transition-transform duration-200 ${isSuppliersOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isSuppliersOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/suppliers/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/suppliers/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+
+        {/* Conditionally render Asset Management */}
+        {(userRole === 'super_user' || userRole === 'manager') && (
+          <li>
+            <button
+              onClick={() => setIsAssetsOpen(!isAssetsOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Asset Management
+              <span className={`inline-block transition-transform duration-200 ${isAssetsOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isAssetsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/assets/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/assets/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+        {/* Conditionally render Asset Management */}
+        {(userRole === 'super_user') && (
+          <li>
+            <button
+              onClick={() => setIsUsersOpen(!isUsersOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              User Management
+              <span className={`inline-block transition-transform duration-200 ${isUsersOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isUsersOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/user/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/user/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+        {/* Conditionally render Asset Management */}
+        {(userRole === 'super_user') && (
+          <li>
+            <button
+              onClick={() => setIsPurchasesOpen(!isPurchasesOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Purchase Management
+              <span className={`inline-block transition-transform duration-200 ${isPurchasesOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isPurchasesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/purchases/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/purchases/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+
+        {/* Conditionally render deluvery notes Management */}
+        {(userRole === 'super_user') && (
+          <li>
+            <button
+              onClick={() => setIsDeliveryNotesOpen(!isDeliveryNotesOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Delivery Management
+              <span className={`inline-block transition-transform duration-200 ${isDeliveryNotesOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isDeliveryNotesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/delivery_note/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/delivery_note/add">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+
+
+
       </ul>
     </nav>
   );

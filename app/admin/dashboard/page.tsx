@@ -24,7 +24,7 @@ interface DashboardStats {
   expired_subscriptions: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);

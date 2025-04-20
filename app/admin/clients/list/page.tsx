@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 export default function ClientList() {
   const [clients, setClients] = useState<any[]>([]);  // Ensures clients is always an array

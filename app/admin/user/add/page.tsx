@@ -112,9 +112,10 @@ export default function RegisterUser() {
               className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select Role</option>
-              <option value="admin">Admin</option>
-              <option value="staff">Staff</option>
-              <option value="viewer">Viewer</option>
+              <option value="super_user">Super Admin</option>
+              <option value="sales">Sales</option>
+              <option value="manager">Operation Manager</option>
+              <option value="technician">Technician</option>
             </select>
             <button
               type="submit"

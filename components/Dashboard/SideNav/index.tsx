@@ -386,12 +386,12 @@ const SideNav = () => {
             <ul className={`ml-6 space-y-2 ${isUsersOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
                 <Link href="/admin/user/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Users</span>
                 </Link>
               </li>
               <li>
                 <Link href="/admin/user/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New User</span>
                 </Link>
               </li>
             </ul>

@@ -48,7 +48,7 @@ const SideNav = () => {
         </li>
 
         {/* Conditionally render Clients */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
+        {(userRole === 'super_user' || userRole === 'sales') && (
           <li>
             <button
               onClick={() => setIsClientsOpen(!isClientsOpen)}
@@ -75,7 +75,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Plans */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
+        {(userRole === 'super_user') && (
           <li>
             <button
               onClick={() => setIsPlansOpen(!isPlansOpen)}
@@ -102,7 +102,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Subscriptions */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
+        {(userRole === 'super_user' || userRole === 'manager' || userRole==='sales' ) && (
           <li>
             <button
               onClick={() => setIsSubsOpen(!isSubsOpen)}
@@ -129,7 +129,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Invoices */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
+        {(userRole === 'super_user' || userRole === 'sales') && (
           <li>
             <button
               onClick={() => setIsInvoicesOpen(!isInvoicesOpen)}
@@ -182,7 +182,7 @@ const SideNav = () => {
           </li>
         )}
 
-        {(userRole === 'super_user' || userRole === 'sales') && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsStockOpen(!isStockOpen)}
@@ -238,7 +238,7 @@ const SideNav = () => {
           </li>
         )}
         {/* Conditionally render Jobs */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
+        {(userRole === 'super_user') && (
           <li>
             <button
               onClick={() => setIsJobsOpen(!isJobsOpen)}
@@ -265,7 +265,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Supports */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
+        {(userRole === 'super_user' || userRole === 'technician') && (
           <li>
             <button
               onClick={() => setIsSupportsOpen(!isSupportsOpen)}
@@ -398,7 +398,7 @@ const SideNav = () => {
           </li>
         )}
         {/* Conditionally render Asset Management */}
-        {(userRole === 'super_user') && (
+        {(userRole === 'super_user' || userRole==='manager') && (
           <li>
             <button
               onClick={() => setIsPurchasesOpen(!isPurchasesOpen)}
@@ -425,7 +425,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render deluvery notes Management */}
-        {(userRole === 'super_user') && (
+        {(userRole === 'super_user' || userRole==='manager') && (
           <li>
             <button
               onClick={() => setIsDeliveryNotesOpen(!isDeliveryNotesOpen)}

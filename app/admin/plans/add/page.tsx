@@ -5,122 +5,216 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
-export default function RegisterPlan() {
+interface Supplier {
+  id: number;
+  name: string;
+  email: string;
+  address: string;
+}
+
+export default function CreatePlan() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     price: "",
+    provider_price: "",
     duration: "",
     description: "",
+    supplier_id: "",
+    provider_name: "",
   });
 
-  const [authToken, setAuthToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
+  // Fetch suppliers from API
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setError("Authentication required. Please log in.");
-    }
-    setAuthToken(token);
+    fetchSuppliers();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // Update filtered suppliers when search term or suppliers list changes
+  useEffect(() => {
+    const filtered = suppliers.filter((s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredSuppliers(filtered);
+  }, [searchTerm, suppliers]);
+
+  const fetchSuppliers = async () => {
+    const token = localStorage.getItem("authToken");
+    try {
+      const res = await fetch(`${API_URL}/suppliers`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setSuppliers(json.data);
+        setFilteredSuppliers(json.data);
+      } else {
+        setError(json.message || "Failed to load suppliers");
+      }
+    } catch (err) {
+      setError("Failed to fetch suppliers.");
+    }
   };
 
+  // Handle form data changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
-    setSuccess(null);
-
-    if (!authToken) {
-      setError("You are not authenticated. Please log in.");
-      setLoading(false);
-      return;
-    }
+    const token = localStorage.getItem("authToken");
 
     try {
-      const response = await fetch(`${API_URL}/plans`, {
+      const res = await fetch(`${API_URL}/plans`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const json = await res.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Plan registration failed");
+      if (res.ok) {
+        setMessage("Plan created successfully.");
+        setFormData({
+          name: "",
+          price: "",
+          provider_price: "",
+          duration: "",
+          description: "",
+          supplier_id: "",
+          provider_name: "",
+        });
+      } else {
+        setError(json.message || "Failed to create plan.");
       }
-
-      setSuccess("Plan registered successfully!");
-      setFormData({ name: "", price: "", duration: "", description: "" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
+      setError("Error while submitting plan.");
     }
   };
 
   return (
     <DashboardLayout>
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-md">
-          <h2 className="mb-4 text-center text-2xl font-bold">Register Plan</h2>
+      <div className="max-w-3xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+        <h1 className="text-2xl font-bold mb-6">Create New Plan</h1>
 
-          {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
-          {success && <p className="mb-4 text-sm text-green-500">{success}</p>}
+        {message && <p className="text-green-600 mb-4">{message}</p>}
+        {error && <p className="text-red-600 mb-4">{error}</p>}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            placeholder="Plan Name"
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          />
+
+          <input
+            type="number"
+            name="price"
+            value={formData.price}
+            placeholder="Price"
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          />
+
+          <input
+            type="number"
+            name="provider_price"
+            value={formData.provider_price}
+            placeholder="Provider Price"
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          />
+
+          <input
+            type="number"
+            name="duration"
+            value={formData.duration}
+            placeholder="Duration (days)"
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          />
+
+          <input
+            type="text"
+            name="provider_name"
+            value={formData.provider_name}
+            placeholder="Provider Name"
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          />
+
+          <textarea
+            name="description"
+            value={formData.description}
+            placeholder="Description"
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
+
+          {/* Search Supplier inside select dropdown */}
+          <div className="relative">
             <input
               type="text"
-              name="name"
-              placeholder="Plan Name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              placeholder="Search supplier..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-2 border rounded"
+              onFocus={() => setIsDropdownOpen(true)}
             />
-            <input
-              type="number"
-              name="price"
-              placeholder="Price"
-              value={formData.price}
-              onChange={handleChange}
-              required
-              className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              name="duration"
-              placeholder="Duration"
-              value={formData.duration}
-              onChange={handleChange}
-              required
-              className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
-            <textarea
-              name="description"
-              placeholder="Description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:bg-gray-400"
-            >
-              {loading ? "Registering..." : "Register Plan"}
-            </button>
-          </form>
-        </div>
+
+            <div className={`absolute left-0 right-0 mt-1 bg-white border rounded ${isDropdownOpen ? "block" : "hidden"}`}>
+              {filteredSuppliers.length > 0 ? (
+                filteredSuppliers.map((supplier) => (
+                  <div
+                    key={supplier.id}
+                    onClick={() => {
+                      setFormData({ ...formData, supplier_id: supplier.id.toString() });
+                      setSearchTerm(supplier.name);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="p-2 cursor-pointer hover:bg-gray-200"
+                  >
+                    {supplier.name} - {supplier.email}
+                  </div>
+                ))
+              ) : (
+                <div className="p-2 text-gray-500">No suppliers found</div>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Submit
+          </button>
+        </form>
       </div>
     </DashboardLayout>
   );

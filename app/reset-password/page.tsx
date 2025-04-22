@@ -1,10 +1,10 @@
 // app/reset-password/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const email = searchParams.get('email');
@@ -18,7 +18,6 @@ export default function ResetPasswordPage() {
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/password/reset`, {
       method: 'POST',
-      
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -29,9 +28,6 @@ export default function ResetPasswordPage() {
         password,
         password_confirmation: passwordConfirmation,
       }),
-
-      
-      //credentials: 'include'
     });
 
     const data = await res.json();
@@ -85,5 +81,13 @@ export default function ResetPasswordPage() {
         )}
       </form>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

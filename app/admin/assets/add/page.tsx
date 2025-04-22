@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import DashboardLayout from '@/components/layouts/DashboardLayout';
+import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
@@ -86,8 +87,18 @@ export default function RegisterAsset() {
     return (
         <DashboardLayout>
             <div className="flex min-h-screen items-center justify-center bg-gray-100">
-                <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-md">
-                    <h2 className="mb-4 text-center text-2xl font-bold">Register Asset</h2>
+              {/* Top Right Button (absolute position) */}
+              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-md relative">
+                    {/* Top Right Button */}
+                    <div className="absolute right-6 top-6">
+                        <Link
+                            href="/admin/assets/list"
+                            className="inline-block rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                        >
+                            &larr; Go To List
+                        </Link>
+                    </div>
+                    <h2 className="mb-4 text-left text-2xl font-bold">Register Asset</h2>
 
                     {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
                     {success && <p className="mb-4 text-sm text-green-500">{success}</p>}

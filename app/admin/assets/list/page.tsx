@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import DashboardLayout from '@/components/layouts/DashboardLayout';
+import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
@@ -63,6 +64,14 @@ export default function AssetList() {
   return (
     <DashboardLayout>
       <div className="container mx-auto p-4">
+        <div className="right-6 top-6">
+          <Link
+            href="/admin/assets/add"
+            className="inline-block rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          >
+            &larr; Add new
+          </Link>
+        </div>
         <h2 className="text-2xl font-bold mb-4">Asset List</h2>
         {error && <p className="text-red-500">{error}</p>}
         {loading ? (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -28,12 +29,9 @@ export default function SignInPage() {
         throw new Error(data.error || "Login failed");
       }
 
-      // Store token
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      console.log(data)
 
-      // Redirect to dashboard
       router.push("/admin/dashboard");
     } catch (err: any) {
       setError(err.message);
@@ -68,6 +66,13 @@ export default function SignInPage() {
         <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded">
           Login
         </button>
+
+        {/* Forgot password link */}
+        <div className="mt-3 text-center">
+          <Link href="/forgot-password" className="text-blue-500 hover:underline text-sm">
+            Forgot password?
+          </Link>
+        </div>
       </form>
     </div>
   );

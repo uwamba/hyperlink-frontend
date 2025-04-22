@@ -305,12 +305,12 @@ const SideNav = () => {
             </button>
             <ul className={`ml-6 space-y-2 ${isExpensesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
-                <Link href="/admin/expenses/list">
+                <Link href="/admin/expense/list">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
                 </Link>
               </li>
               <li>
-                <Link href="/admin/expenses/add">
+                <Link href="/admin/expense/add">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
                 </Link>
               </li>

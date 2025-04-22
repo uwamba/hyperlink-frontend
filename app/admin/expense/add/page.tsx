@@ -12,8 +12,10 @@ export default function AddExpense() {
     expense_date: "",
     category: "",
   });
+
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,11 +24,12 @@ export default function AddExpense() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
+    setError(null);
+    setSuccess(null);
 
     const authToken = localStorage.getItem("authToken");
     if (!authToken) {
-      setMessage("Authentication required. Please log in.");
+      setError("Authentication required. Please log in.");
       setLoading(false);
       return;
     }
@@ -44,13 +47,13 @@ export default function AddExpense() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage("Expense added successfully!");
+        setSuccess("Expense added successfully!");
         setForm({ description: "", amount: "", expense_date: "", category: "" });
       } else {
-        setMessage(data.message || "Failed to add expense.");
+        throw new Error(data.message || "Failed to add expense.");
       }
     } catch (err) {
-      setMessage("Something went wrong.");
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -58,55 +61,61 @@ export default function AddExpense() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-xl mx-auto p-6 bg-white rounded shadow-md">
+      <div className="container mx-auto p-6">
         <h2 className="text-2xl font-bold mb-4">Add New Expense</h2>
-        {message && <p className="mb-4 text-green-500">{message}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <p className="text-red-500 mb-2">{error}</p>}
+        {success && <p className="text-green-600 mb-2">{success}</p>}
+
+        <form
+          onSubmit={handleSubmit}
+          className="max-w-xl bg-white rounded-lg shadow p-6 space-y-4"
+        >
           <div>
-            <label className="block mb-1 font-medium">Description</label>
+            <label className="block font-medium">Description</label>
             <input
               type="text"
               name="description"
               value={form.description}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded"
+              className="w-full border px-3 py-2 rounded"
               required
             />
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Amount</label>
+            <label className="block font-medium">Amount</label>
             <input
               type="number"
               step="0.01"
               name="amount"
               value={form.amount}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded"
+              className="w-full border px-3 py-2 rounded"
               required
             />
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Expense Date</label>
+            <label className="block font-medium">Expense Date</label>
             <input
               type="date"
               name="expense_date"
               value={form.expense_date}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded"
+              className="w-full border px-3 py-2 rounded"
               required
             />
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Category</label>
+            <label className="block font-medium">Category</label>
             <select
               name="category"
               value={form.category}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded"
+              className="w-full border px-3 py-2 rounded"
+              required
             >
               <option value="">Select a category</option>
               <option value="Stationery">Stationery</option>
@@ -117,13 +126,15 @@ export default function AddExpense() {
             </select>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-          >
-            {loading ? "Saving..." : "Add Expense"}
-          </button>
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? "Saving..." : "Add Expense"}
+            </button>
+          </div>
         </form>
       </div>
     </DashboardLayout>

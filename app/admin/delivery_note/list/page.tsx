@@ -4,17 +4,23 @@ import { useEffect, useState } from "react";
 import { jsPDF } from "jspdf";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 
+// API and ENV Configs
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+
+const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Company Name";
+const COMPANY_TIN = process.env.NEXT_PUBLIC_COMPANY_TIN || "TIN Number";
+const BANK_ACCOUNT_NAME = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "Bank Account Name";
+const BANK_ACCOUNT_RWF = process.env.NEXT_PUBLIC_BANK_ACCOUNT_RWF || "RWF Account";
+const BANK_ACCOUNT_USD = process.env.NEXT_PUBLIC_BANK_ACCOUNT_USD || "USD Account";
 
 export default function DeliveryNoteList() {
   const [deliveryNotes, setDeliveryNotes] = useState<any[]>([]);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedNote, setSelectedNote] = useState<any | null>(null); // State for selected delivery note
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
+  const [selectedNote, setSelectedNote] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load auth token from localStorage
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -24,7 +30,6 @@ export default function DeliveryNoteList() {
     }
   }, []);
 
-  // Fetch delivery notes when token is available
   useEffect(() => {
     if (authToken) {
       fetchDeliveryNotes();
@@ -51,71 +56,102 @@ export default function DeliveryNoteList() {
     }
   };
 
-  // Function to generate and download the PDF
   const downloadPDF = (note: any) => {
-    if (!note.items || note.items.length === 0) {
+    if (!note || !note.items || note.items.length === 0) {
       setError("No items available for this delivery note.");
       return;
     }
   
     const doc = new jsPDF();
-    
-    // Set font size for the title
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("Delivery Note", 20, 20);
   
-    // Set font size for the details section
+    // Main Titles
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("DELIVERY NOTE", 20, 20);
+  
+    doc.setFontSize(16);
+    doc.text(`DELIVERY NOTE # ${note.delivery_number}`, 20, 30);
+  
+    doc.setFontSize(16);
+    doc.text(COMPANY_NAME, 20, 40);
+  
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
+    doc.text(`TIN: ${COMPANY_TIN}`, 20, 50);
   
-    // Delivery note details
-    doc.text(`Delivery Number: ${note.delivery_number}`, 20, 30);
-    doc.text(`Recipient: ${note.recipient}`, 20, 40);
-    doc.text(`Delivery Date: ${note.delivery_date}`, 20, 50);
-  
-    // Add some space before the items table
-    doc.text("Items:", 20, 60);
-  
-    // Table Header
-    const header = ["Item Name", "Quantity"];
-    const tableColumnWidths = [100, 50];  // Adjust table columns width if necessary
-    const startX = 20;  // Starting X position for the table
-    let currentY = 70;  // Starting Y position for the table
-  
-    // Draw the table header with bold font
+    // Billing Details
     doc.setFont("helvetica", "bold");
-    header.forEach((column, index) => {
-      doc.text(column, startX + index * tableColumnWidths[index], currentY);
-    });
-  
-    // Draw table separator
-    currentY += 10;  // Move below the header
-    doc.line(startX, currentY, startX + tableColumnWidths[0] + tableColumnWidths[1], currentY);  // Table line separator
-  
-    // Draw table rows with item details
+    doc.text("Bill To:", 20, 65);
     doc.setFont("helvetica", "normal");
-    note.items.forEach((item: any, index: number) => {
-      currentY += 10;
-      doc.text(item.item_name, startX, currentY);
-      doc.text(String(item.quantity), startX + tableColumnWidths[0], currentY);
+    doc.text(note.recipient, 40, 65);
+  
+    doc.setFont("helvetica", "bold");
+    doc.text("Ship To:", 20, 75);
+    doc.setFont("helvetica", "normal");
+    doc.text(note.recipient, 40, 75);
+  
+    doc.setFont("helvetica", "bold");
+    doc.text(`${note.delivery_date} Date:`, 20, 85);
+  
+    // Table Headers
+    let currentY = 100;
+    const startX = 20;
+    doc.setFont("helvetica", "bold");
+    doc.text("Item", startX, currentY);
+    doc.text("Quantity", startX + 90, currentY);
+    doc.text("Rate", startX + 120, currentY);
+    doc.text("Amount", startX + 160, currentY);
+  
+    // Items
+    currentY += 10;
+    doc.setFont("helvetica", "normal");
+  
+    let totalAmount = 0;
+  
+    note.items.forEach((item: any) => {
+      const itemName = item.item_name || "";
+      const quantity = item.quantity || 0;
+      const rate = item.rate || 0;
+      const amount = quantity * rate;
+  
+      const splitItemName = doc.splitTextToSize(itemName, 80); // wrap long item names
+  
+      doc.text(splitItemName, startX, currentY);
+      doc.text(String(quantity), startX + 90, currentY);
+      doc.text(`RWF ${rate.toLocaleString()}`, startX + 120, currentY);
+      doc.text(`RWF ${amount.toLocaleString()}`, startX + 160, currentY);
+  
+      // adjust y-axis if item name has multiple lines
+      currentY += 10 + (splitItemName.length - 1) * 6;
+      totalAmount += amount;
     });
   
-    // Draw table footer line
-    currentY += 10;  // Leave some space after the items
-    doc.line(startX, currentY, startX + tableColumnWidths[0] + tableColumnWidths[1], currentY);
+    // Total Amount
+    currentY += 10;
+    doc.setFont("helvetica", "bold");
+    doc.text(`RWF ${totalAmount.toLocaleString()} Total:`, 160, currentY, { align: "right" });
+  
+    // Account Information
+    currentY += 20;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("ACCOUNT:", startX, currentY);
+  
+    doc.setFont("helvetica", "normal");
+    doc.text(`Bank Account Name: ${BANK_ACCOUNT_NAME}`, startX, currentY + 10);
+    doc.text(`Bank of Kigali: ${BANK_ACCOUNT_RWF} (RWF)`, startX, currentY + 20);
+    doc.text(`Bank of Kigali: ${BANK_ACCOUNT_USD} (USD)`, startX, currentY + 30);
   
     // Save the PDF
-    doc.save(`delivery_note_${note.delivery_number}.pdf`);
+    doc.save(`quote-${note.delivery_number}.pdf`);
   };
   
-  // Function to handle item view in modal
+
   const handleViewItems = (note: any) => {
     setSelectedNote(note);
-    setIsModalOpen(true); // Open the modal
+    setIsModalOpen(true);
   };
 
-  // Function to close the modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedNote(null);
@@ -166,18 +202,22 @@ export default function DeliveryNoteList() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="text-center py-4">No delivery notes found</td>
+                  <td colSpan={5} className="text-center py-4">
+                    No delivery notes found
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         )}
 
-        {/* Modal to display items */}
+        {/* Modal */}
         {isModalOpen && selectedNote && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded shadow-lg w-1/2">
-              <h2 className="text-xl font-bold mb-4">Items in Delivery Note {selectedNote.delivery_number}</h2>
+              <h2 className="text-xl font-bold mb-4">
+                Items in Delivery Note {selectedNote.delivery_number}
+              </h2>
               <ul>
                 {selectedNote.items.map((item: any, index: number) => (
                   <li key={item.id} className="py-2">

@@ -36,17 +36,15 @@ const SideNav = () => {
             <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Dashboard</span>
           </Link>
         </li>
+       
+        {/* Conditionally render setings */}
+        {(userRole === 'super_user') && (
         <li>
-          <Link href="/profile">
-            <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Profile</span>
-          </Link>
-        </li>
-        <li>
-          <Link href="/settings">
+          <Link href="/admin/settings">
             <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Settings</span>
           </Link>
         </li>
-
+     )}
         {/* Conditionally render Clients */}
         {(userRole === 'super_user' || userRole === 'sales') && (
           <li>
@@ -439,12 +437,12 @@ const SideNav = () => {
             <ul className={`ml-6 space-y-2 ${isDeliveryNotesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
                 <Link href="/admin/delivery_note/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
                 </Link>
               </li>
               <li>
                 <Link href="/admin/delivery_note/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Create New Delivery</span>
                 </Link>
               </li>
             </ul>

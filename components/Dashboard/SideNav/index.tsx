@@ -18,6 +18,9 @@ const SideNav = () => {
   const [isAssetsOpen, setIsAssetsOpen] = useState(false);
   const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
   const [isDeliveryNotesOpen, setIsDeliveryNotesOpen] = useState(false);
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   useEffect(() => {
@@ -26,9 +29,23 @@ const SideNav = () => {
       setUserRole(userData.role); // Assuming userData has a 'role' field
     }
   }, []);
+  const matchesSearch = (text) => {
+    return text.toLowerCase().includes(searchQuery.toLowerCase());
+  };
 
   return (
     <nav className="w-64 bg-gray-800 text-white h-screen p-4 overflow-y-auto">
+
+      {/* Search input added */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full p-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
       <ul className="space-y-4">
         <li>
@@ -46,7 +63,38 @@ const SideNav = () => {
         </li>
      )}
         {/* Conditionally render Clients */}
-        {(userRole === 'super_user' || userRole === 'sales') && (
+        {(userRole === 'super_user' || userRole === 'sales') && matchesSearch("Clients") && (
+          <li>
+            <button
+              onClick={() => setIsReportsOpen(!isReportsOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Reports
+              <span className={`inline-block transition-transform duration-200 ${isReportsOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isReportsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/report/purchases">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Purchases</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/report/expenses">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Expenses</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/report/sales">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Sales</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+
+         {(userRole === 'super_user') && matchesSearch("Clients") && (
           <li>
             <button
               onClick={() => setIsClientsOpen(!isClientsOpen)}

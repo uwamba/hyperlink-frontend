@@ -74,7 +74,7 @@ const SideNav = () => {
                 <ChevronDownIcon className="w-5 h-5 inline-block" />
               </span>
             </button>
-            <ul className={`ml-6 space-y-2 ${isReportsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+            <ul className={`ml-6 space-y-2 ${isReportsOpen ? "max-h-100 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
                 <Link href="/admin/report/purchases">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Purchases</span>
@@ -88,6 +88,11 @@ const SideNav = () => {
               <li>
                 <Link href="/admin/report/sales">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Sales</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/report/stock">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Stock</span>
                 </Link>
               </li>
             </ul>

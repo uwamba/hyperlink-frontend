@@ -46,7 +46,7 @@ export default function AddDeliveryNote() {
     if (!authToken) return;
 
     try {
-      const res = await fetch(`${API_URL}/items`, {
+      const res = await fetch(`${API_URL}/items/inStock`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },

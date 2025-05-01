@@ -193,13 +193,17 @@ const SideNav = () => {
             </button>
             <ul className={`ml-6 space-y-2 ${isInvoicesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
-                <Link href="/admin/invoices/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
+                <Link href="/admin/invoices/overdue">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Overdue Invoices</span>
                 </Link>
               </li>
               <li>
-                <Link href="/admin/invoices/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
+                <Link href="/admin/invoices/paid">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Paid Invoices</span>
+                </Link>
+              </li>\<li>
+                <Link href="/admin/invoices/unpaid">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Unpaid Invoices</span>
                 </Link>
               </li>
             </ul>
@@ -225,7 +229,7 @@ const SideNav = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/admin/payments/add">
+                <Link href="/admin/invoices/unpaid">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
                 </Link>
               </li>

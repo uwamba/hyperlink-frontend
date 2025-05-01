@@ -201,7 +201,8 @@ const SideNav = () => {
                 <Link href="/admin/invoices/paid">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Paid Invoices</span>
                 </Link>
-              </li>\<li>
+              </li>
+              <li>
                 <Link href="/admin/invoices/unpaid">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Unpaid Invoices</span>
                 </Link>

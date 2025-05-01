@@ -18,14 +18,28 @@ export default function ExpenseList() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<number | null>(null);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editForm, setEditForm] = useState({
+    description: "",
+    amount: "",
+    expense_date: "",
+    category: "",
+  });
 
   useEffect(() => {
-    fetchExpenses();
+    const token = localStorage.getItem("authToken");
+    setAuthToken(token);
+    fetchExpenses(token);
   }, []);
 
-  const fetchExpenses = async () => {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
+  const fetchExpenses = async (token: string | null) => {
+    if (!token) {
       setError("Authentication required. Please log in.");
       setLoading(false);
       return;
@@ -33,22 +47,84 @@ export default function ExpenseList() {
 
     try {
       const response = await fetch(`${API_URL}/expenses`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      const responseData = await response.json();
-
-      if (response.ok && Array.isArray(responseData.data)) {
-        setExpenses(responseData.data);
+      const json = await response.json();
+      if (response.ok) {
+        setExpenses(json.data || []);
       } else {
-        throw new Error(responseData.message || "Failed to load expenses");
+        throw new Error(json.message || "Failed to load expenses");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError("Failed to fetch expenses.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const confirmDeleteExpense = (id: number) => {
+    setExpenseToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const deleteExpense = async () => {
+    if (!expenseToDelete || !authToken) return;
+    try {
+      const res = await fetch(`${API_URL}/expenses/${expenseToDelete}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete expense");
+      setExpenses((prev) => prev.filter((exp) => exp.id !== expenseToDelete));
+      setShowDeleteModal(false);
+      setExpenseToDelete(null);
+    } catch (err) {
+      setError("Failed to delete expense.");
+    }
+  };
+
+  const openEditModal = (expense: Expense) => {
+    setEditingExpense(expense);
+    setEditForm({
+      description: expense.description,
+      amount: expense.amount.toString(),
+      expense_date: expense.expense_date,
+      category: expense.category || "",
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const updateExpense = async () => {
+    if (!editingExpense || !authToken) return;
+    try {
+      const res = await fetch(`${API_URL}/expenses/${editingExpense.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...editForm,
+          amount: parseFloat(editForm.amount),
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) throw new Error(json.message || "Failed to update expense");
+
+      setExpenses((prev) =>
+        prev.map((exp) => (exp.id === editingExpense.id ? json.data : exp))
+      );
+
+      setShowEditModal(false);
+      setEditingExpense(null);
+    } catch (err) {
+      setError("Failed to update expense.");
     }
   };
 
@@ -68,6 +144,7 @@ export default function ExpenseList() {
                 <th className="border px-4 py-2">Category</th>
                 <th className="border px-4 py-2">Expense Date</th>
                 <th className="border px-4 py-2">Created At</th>
+                <th className="border px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -85,11 +162,25 @@ export default function ExpenseList() {
                     <td className="border px-4 py-2">
                       {new Date(expense.created_at).toLocaleString()}
                     </td>
+                    <td className="border px-4 py-2 flex gap-2">
+                      <button
+                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                        onClick={() => openEditModal(expense)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                        onClick={() => confirmDeleteExpense(expense.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="text-center py-4">
+                  <td colSpan={6} className="text-center py-4">
                     No expenses found
                   </td>
                 </tr>
@@ -98,6 +189,90 @@ export default function ExpenseList() {
           </table>
         )}
       </div>
+
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow p-6 w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+            <p>Are you sure you want to delete this expense?</p>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setExpenseToDelete(null);
+                }}
+                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteExpense}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingExpense && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow p-6 w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4">Edit Expense</h2>
+            <div className="flex flex-col gap-4">
+              <input
+                name="description"
+                value={editForm.description}
+                onChange={handleEditChange}
+                placeholder="Description"
+                className="border px-3 py-2 rounded"
+              />
+              <input
+                name="amount"
+                type="number"
+                value={editForm.amount}
+                onChange={handleEditChange}
+                placeholder="Amount"
+                className="border px-3 py-2 rounded"
+              />
+              <input
+                name="category"
+                value={editForm.category}
+                onChange={handleEditChange}
+                placeholder="Category"
+                className="border px-3 py-2 rounded"
+              />
+              <input
+                name="expense_date"
+                type="date"
+                value={editForm.expense_date}
+                onChange={handleEditChange}
+                className="border px-3 py-2 rounded"
+              />
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingExpense(null);
+                  }}
+                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={updateExpense}
+                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

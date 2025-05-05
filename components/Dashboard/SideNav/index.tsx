@@ -19,6 +19,8 @@ const SideNav = () => {
   const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
   const [isDeliveryNotesOpen, setIsDeliveryNotesOpen] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
+  const [isFloatOpen, setIsFloatOpen] = useState(false);
+
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -146,6 +148,32 @@ const SideNav = () => {
               <li>
                 <Link href="/admin/plans/add">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+        )}
+        {/* Conditionally render Floats */}
+        {(userRole === 'super_user' || userRole === 'manager')  && (
+          <li>
+            <button
+              onClick={() => setIsFloatOpen(!isFloatOpen)}
+              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+            >
+              Peticash Floats
+              <span className={`inline-block transition-transform duration-200 ${isFloatOpen ? "rotate-180" : "rotate-0"}`}>
+                <ChevronDownIcon className="w-5 h-5 inline-block" />
+              </span>
+            </button>
+            <ul className={`ml-6 space-y-2 ${isFloatOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
+              <li>
+                <Link href="/admin/float/list">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/float/request">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add  Request</span>
                 </Link>
               </li>
             </ul>

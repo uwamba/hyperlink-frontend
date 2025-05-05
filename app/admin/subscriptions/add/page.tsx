@@ -13,10 +13,10 @@ export default function SubscribeClient() {
     plan_id: "",
     start_date: "",
     end_date: "",
-    billing_date: "", // Added billing_date
-    status: "active", // Default to 'active'
+    billing_date: "",
+    status: "active",
   });
-
+  const [contractFile, setContractFile] = useState<File | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,18 +29,13 @@ export default function SubscribeClient() {
     }
     setAuthToken(token);
 
-    // Fetch clients and plans from the API
     const fetchData = async () => {
       try {
         const clientsResponse = await fetch(`${API_URL}/clients`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         const plansResponse = await fetch(`${API_URL}/plans`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!clientsResponse.ok || !plansResponse.ok) {
@@ -64,6 +59,12 @@ export default function SubscribeClient() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setContractFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -77,19 +78,26 @@ export default function SubscribeClient() {
     }
 
     try {
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        payload.append(key, value);
+      });
+      if (contractFile) {
+        payload.append("contract", contractFile);
+      }
+
       const response = await fetch(`${API_URL}/subscriptions`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(formData),
+        body: payload,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("Subscription creation failed");
+        throw new Error(data.message || "Subscription creation failed");
       }
 
       setSuccess("Client subscribed successfully!");
@@ -98,9 +106,10 @@ export default function SubscribeClient() {
         plan_id: "",
         start_date: "",
         end_date: "",
-        billing_date: "", // Reset billing_date
+        billing_date: "",
         status: "active",
       });
+      setContractFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -196,6 +205,19 @@ export default function SubscribeClient() {
                 value={formData.billing_date}
                 onChange={handleChange}
                 required
+                className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="contract" className="block text-sm font-medium text-gray-700">
+                Contract File (PDF/DOC)
+              </label>
+              <input
+                type="file"
+                name="contract"
+                accept=".pdf,.doc,.docx"
+                onChange={handleFileChange}
                 className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500"
               />
             </div>

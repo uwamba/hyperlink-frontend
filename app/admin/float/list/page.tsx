@@ -11,7 +11,9 @@ export default function FloatList() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
+  const [editingFloat, setEditingFloat] = useState<any | null>(null);
+  const [editedAmount, setEditedAmount] = useState("");
+  const [editedReason, setEditedReason] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -81,13 +83,70 @@ export default function FloatList() {
       });
 
       if (response.ok) {
-        fetchFloats(); // Refresh list
+        fetchFloats();
       } else {
         const data = await response.json();
         alert(data.message || "Failed to update status");
       }
     } catch (err) {
       alert("Error updating status: " + err);
+    }
+  };
+
+  const handleEdit = (float: any) => {
+    setEditingFloat(float);
+    setEditedAmount(float.amount);
+    setEditedReason(float.reason);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!authToken || !editingFloat) return;
+
+    try {
+      const response = await fetch(`${API_URL}/petty-cash-floats/${editingFloat.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          amount: editedAmount,
+          reason: editedReason,
+        }),
+      });
+
+      if (response.ok) {
+        setEditingFloat(null);
+        fetchFloats();
+      } else {
+        alert("Failed to update float.");
+      }
+    } catch (err) {
+      alert("Error updating float: " + err);
+    }
+  };
+
+  const handleDelete = async (floatId: string) => {
+    if (!authToken) return;
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this float?");
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${API_URL}/petty-cash-floats/${floatId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchFloats();
+      } else {
+        alert("Failed to delete float.");
+      }
+    } catch (err) {
+      alert("Error deleting float: " + err);
     }
   };
 
@@ -140,19 +199,35 @@ export default function FloatList() {
                       {new Date(float.created_at).toLocaleDateString()}
                     </td>
                     <td className="border px-4 py-2 capitalize">{float.status}</td>
-                    {userRole === "super_user" && float.status === "pending" && (
+                    {userRole === "super_user" && (
                       <td className="border px-4 py-2 space-x-2">
+                        {float.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() => handleStatusChange(float.id, "approved")}
+                              className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(float.id, "rejected")}
+                              className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
                         <button
-                          onClick={() => handleStatusChange(float.id, "approved")}
-                          className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+                          onClick={() => handleEdit(float)}
+                          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
                         >
-                          Approve
+                          Edit
                         </button>
                         <button
-                          onClick={() => handleStatusChange(float.id, "rejected")}
-                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                          onClick={() => handleDelete(float.id)}
+                          className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700"
                         >
-                          Reject
+                          Delete
                         </button>
                       </td>
                     )}
@@ -167,6 +242,46 @@ export default function FloatList() {
               )}
             </tbody>
           </table>
+        )}
+
+        {/* Edit Form */}
+        {editingFloat && (
+          <div className="mt-6 border p-4 rounded bg-gray-50">
+            <h3 className="text-lg font-semibold mb-2">Edit Float #{editingFloat.id}</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-sm font-medium">Amount:</label>
+                <input
+                  type="number"
+                  value={editedAmount}
+                  onChange={(e) => setEditedAmount(e.target.value)}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Reason:</label>
+                <textarea
+                  value={editedReason}
+                  onChange={(e) => setEditedReason(e.target.value)}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div className="flex gap-4 mt-2">
+                <button
+                  onClick={handleEditSubmit}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => setEditingFloat(null)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </DashboardLayout>

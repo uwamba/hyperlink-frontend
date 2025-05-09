@@ -297,26 +297,23 @@ const SideNav = () => {
                   </ul>
                 </div>
               </li>
-
               <li>
-                <div className="group">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
-                    Items
-                  </span>
-                  <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
-                    <li>
-                      <Link href="/admin/stock/items/add">
-                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Item</span>
+                      <Link href="/admin/stock/stock_out">
+                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Delivered Stock</span>
                       </Link>
                     </li>
                     <li>
-                      <Link href="/admin/stock/items/list">
-                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Items</span>
+                      <Link href="/admin/stock/stock_in">
+                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Stock</span>
                       </Link>
                     </li>
-                  </ul>
-                </div>
-              </li>
+                    <li>
+                      <Link href="/admin/stock/new_stock">
+                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">New Stock</span>
+                      </Link>
+                    </li>
+
+             
 
             </ul>
           </li>
@@ -496,12 +493,12 @@ const SideNav = () => {
             <ul className={`ml-6 space-y-2 ${isPurchasesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
               <li>
                 <Link href="/admin/purchases/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
                 </Link>
               </li>
               <li>
                 <Link href="/admin/purchases/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Purchases</span>
                 </Link>
               </li>
             </ul>

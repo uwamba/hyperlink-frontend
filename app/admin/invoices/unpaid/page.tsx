@@ -17,6 +17,7 @@ export default function UnpaidInvoices() {
     payment_method: "MPESA",
     transaction_id: "",
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleGenerateInvoice = async (subscriptionId) => {
     const token = localStorage.getItem("authToken");
@@ -25,7 +26,6 @@ export default function UnpaidInvoices() {
     }
     setAuthToken(token);
     try {
-      // Fetch the PDF from the backend
       const response = await fetch(`${API_URL}/download-invoice/${subscriptionId}`, {
         method: 'POST',
         headers: {
@@ -34,13 +34,11 @@ export default function UnpaidInvoices() {
         },
       });
 
-      // Check if the response is OK (successful)
       if (response.ok) {
-        // Create a Blob object to trigger the download
         const blob = await response.blob();
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `invoice_${subscriptionId}.pdf`; // Name of the downloaded file
+        link.download = `invoice_${subscriptionId}.pdf`;
         link.click();
       } else {
         alert('Failed to generate invoice');
@@ -141,6 +139,40 @@ export default function UnpaidInvoices() {
     }
   };
 
+  const handleDeleteInvoice = async (invoiceId: number) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setError("Authentication required. Please log in.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setInvoices((prevInvoices) =>
+          prevInvoices.filter((invoice) => invoice.id !== invoiceId)
+        );
+        setDeleteDialogOpen(false); // Close the dialog on successful deletion
+      } else {
+        alert('Failed to delete invoice');
+      }
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      alert('An error occurred while deleting the invoice');
+    }
+  };
+
+  const openDeleteDialog = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setDeleteDialogOpen(true);
+  };
+
   return (
     <DashboardLayout>
       <div className="container mx-auto p-6">
@@ -170,22 +202,21 @@ export default function UnpaidInvoices() {
                     <td className="border px-4 py-2">{invoice.due_date}</td>
                     <td className="border px-4 py-2">
                       <span
-                        className={`px-2 py-1 rounded text-sm ${
-                          invoice.status === "paid"
+                        className={`px-2 py-1 rounded text-sm ${invoice.status === "paid"
                             ? "bg-green-500 text-white"
                             : invoice.status === "partial"
-                            ? "bg-yellow-500 text-white"
-                            : "bg-red-500 text-white"
-                        }`}
+                              ? "bg-yellow-500 text-white"
+                              : "bg-red-500 text-white"
+                          }`}
                       >
                         {invoice.status}
                       </span>
                     </td>
                     <td className="border px-4 py-2 flex gap-2">
-                    <button 
-                      onClick={() => handleGenerateInvoice(invoice.id)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-                        View Invoice 
+                      <button
+                        onClick={() => handleGenerateInvoice(invoice.id)}
+                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                        View Invoice
                       </button>
                       {invoice.status !== "paid" && (
                         <button
@@ -195,6 +226,12 @@ export default function UnpaidInvoices() {
                           Pay Invoice
                         </button>
                       )}
+                      <button
+                        onClick={() => openDeleteDialog(invoice)}
+                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                      >
+                        Delete Invoice
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -253,6 +290,27 @@ export default function UnpaidInvoices() {
                 </button>
                 <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={submitPayment}>
                   Submit Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {deleteDialogOpen && selectedInvoice && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+              <h2 className="text-lg font-bold mb-4">Are you sure you want to delete this invoice?</h2>
+              <div className="flex justify-end gap-2">
+                <button className="bg-gray-400 px-4 py-2 rounded" onClick={() => setDeleteDialogOpen(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded"
+                  onClick
+                  ={() => handleDeleteInvoice(selectedInvoice.id)}
+                >
+                  Delete
                 </button>
               </div>
             </div>

@@ -63,7 +63,7 @@ export default function RegisterPettyCashRequest() {
 
         try {
             // Send the user_id along with the request body
-            const response = await fetch(`${API_URL}/petty-cash-floats/`, {
+            const response = await fetch(`${API_URL}/petty-cash-floats`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -183,12 +183,7 @@ export default function PlansPage() {
                     </td>
                     <td className="px-4 py-2 text-sm text-gray-600">{plan.created_at}</td>
                     <td className="px-4 py-2 flex gap-2">
-                      <button
-                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                        onClick={() => openEditModal(plan)}
-                      >
-                        Edit
-                      </button>
+                   
                       <button
                         className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                         onClick={() => confirmDeletePlan(plan.id)}

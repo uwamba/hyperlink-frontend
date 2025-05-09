@@ -17,6 +17,7 @@ export default function PaidInvoices() {
     payment_method: "MPESA",
     transaction_id: "",
   });
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
   const handleGenerateInvoice = async (subscriptionId) => {
     const token = localStorage.getItem("authToken");
@@ -25,7 +26,6 @@ export default function PaidInvoices() {
     }
     setAuthToken(token);
     try {
-      // Fetch the PDF from the backend
       const response = await fetch(`${API_URL}/download-invoice/${subscriptionId}`, {
         method: 'POST',
         headers: {
@@ -34,13 +34,11 @@ export default function PaidInvoices() {
         },
       });
 
-      // Check if the response is OK (successful)
       if (response.ok) {
-        // Create a Blob object to trigger the download
         const blob = await response.blob();
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `invoice_${subscriptionId}.pdf`; // Name of the downloaded file
+        link.download = `invoice_${subscriptionId}.pdf`; 
         link.click();
       } else {
         alert('Failed to generate invoice');
@@ -48,6 +46,34 @@ export default function PaidInvoices() {
     } catch (error) {
       console.error('Error generating invoice:', error);
       alert('An error occurred while generating the invoice');
+    }
+  };
+
+  const handleDeleteInvoice = async (invoiceId: number) => {
+    if (!authToken) {
+      setError("Authentication required. Please log in.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        setInvoices((prevInvoices) =>
+          prevInvoices.filter((invoice) => invoice.id !== invoiceId)
+        );
+        setDeleteConfirmationOpen(false);  // Close the confirmation modal
+      } else {
+        const responseData = await response.json();
+        setError(responseData.message || "Failed to delete the invoice");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred while deleting the invoice");
     }
   };
 
@@ -90,7 +116,7 @@ export default function PaidInvoices() {
   const openPaymentModal = (invoice: any) => {
     setSelectedInvoice(invoice);
     setPaymentData({
-      amount_paid: invoice.amount, // Default full amount
+      amount_paid: invoice.amount, 
       payment_method: "MPESA",
       transaction_id: "",
     });
@@ -143,7 +169,7 @@ export default function PaidInvoices() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-6 overflow-x-auto">
         <h2 className="text-2xl font-bold mb-4">Paid Invoices</h2>
         {error && <p className="text-red-500">{error}</p>}
         {loading ? (
@@ -185,8 +211,8 @@ export default function PaidInvoices() {
                     </td>
                     <td className="border px-4 py-2 flex gap-2">
                       <button 
-                      onClick={() => handleGenerateInvoice(invoice.id)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                        onClick={() => handleGenerateInvoice(invoice.id)}
+                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
                         View Invoice 
                       </button>
                       {invoice.status !== "paid" && (
@@ -197,6 +223,15 @@ export default function PaidInvoices() {
                           Pay Invoice
                         </button>
                       )}
+                      <button
+                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                        onClick={() => {
+                          setSelectedInvoice(invoice);
+                          setDeleteConfirmationOpen(true);
+                        }}
+                      >
+                        Delete Invoice
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -209,6 +244,30 @@ export default function PaidInvoices() {
               )}
             </tbody>
           </table>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmationOpen && selectedInvoice && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+              <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
+              <p>Are you sure you want to delete invoice #{selectedInvoice.invoice_no}?</p>
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  className="bg-gray-400 px-4 py-2 rounded"
+                  onClick={() => setDeleteConfirmationOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded"
+                  onClick={() => handleDeleteInvoice(selectedInvoice.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Payment Modal */}

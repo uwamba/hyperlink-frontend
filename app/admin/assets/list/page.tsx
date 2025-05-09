@@ -181,7 +181,11 @@ export default function AssetList() {
                         </button>
                         <button
                           className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                          onClick={() => deleteAsset(asset.id)}
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this asset?")) {
+                              deleteAsset(asset.id);
+                            }
+                          }}
                         >
                           Delete
                         </button>

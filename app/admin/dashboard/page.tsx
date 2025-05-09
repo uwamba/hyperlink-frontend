@@ -1,149 +1,180 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FaUsers, FaFileInvoiceDollar, FaCheckCircle, FaTimesCircle, FaChartLine, FaBox, FaDollarSign, FaStore } from "react-icons/fa";
-import DashboardLayout from "@/components/layouts/DashboardLayout"; // Make sure to import your layout
+import {
+  FaUsers,
+  FaFileInvoiceDollar,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaChartLine,
+  FaBox,
+  FaDollarSign,
+  FaStore,
+} from "react-icons/fa";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 
-interface DashboardStats {
-  total_sales: number;
-  total_purchases: number;
-  total_expenses: number;
-  total_assets_value: number;
-  profit: number;
+// Define the interfaces
+interface FinancialStats {
+  total_sales: string;
+  total_purchases: string;
+  total_expenses: string;
+  [key: string]: string; // optional for extra fields
+}
+
+interface GeneralStats {
+  total_assets_value: string;
   total_clients: number;
   active_clients: number;
-  inactive_clients: number;
-  total_invoices: number;
-  unpaid_invoices: number;
-  total_payments_received: number;
-  daily_invoices: number;
-  daily_payments: number;
-  weekly_invoices: number;
-  weekly_payments: number;
-  monthly_invoices: number;
-  monthly_payments: number;
-  annual_invoices: number;
-  annual_payments: number;
-  total_subscriptions: number;
-  active_subscriptions: number;
-  expired_subscriptions: number;
-  total_customers: number;
-  total_suppliers: number;
-  total_items: number;
-  most_expensive_asset: string;
-  assets_by_category: any[];
-  sales_by_category: any[];
-  purchases_by_supplier: any[];
-  top_products_by_sales: any[];
-  expenses_by_type: any[];
-  average_profit_margin: number;
+  [key: string]: string | number;
+}
+
+interface StatsData {
+  weekly: FinancialStats;
+  monthly: FinancialStats;
+  annual: FinancialStats;
+  general: GeneralStats;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [period, setPeriod] = useState("monthly");
 
   useEffect(() => {
-    fetch(`${API_URL}/statistics`) // Assuming your API endpoint is '/dashboard-statistics'
-      .then(response => response.json())
-      .then(data => {
-        setStats(data.data);
-        console.log(data);
+    const dateParam = `&date=${selectedDate.toISOString().split("T")[0]}`;
+
+    fetch(`${API_URL}/statistics?period=${period}${dateParam}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setStats(data);
         setLoading(false);
       })
-      .catch(error => {
-        setError(error.message);
+      .catch(() => {
+        setError("Failed to load statistics");
         setLoading(false);
       });
-  }, []);
+  }, [selectedDate, period]);
 
-  if (loading) return <p className="text-center text-lg mt-10">Loading statistics...</p>;
-  if (error) return <p className="text-red-500 text-center">{error}</p>;
+  const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPeriod(e.target.value);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(new Date(e.target.value));
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <DashboardLayout>
       <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-10">Dashboard Overview</h1>
+
+        {/* Period & Date Selector */}
+        <div className="mb-6">
+          <label htmlFor="period" className="mr-2">Select Period:</label>
+          <select id="period" value={period} onChange={handlePeriodChange} className="p-2 border rounded">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="annual">Annual</option>
+          </select>
+
+          <label htmlFor="date" className="ml-4 mr-2">Select Date:</label>
+          <input
+            type="date"
+            id="date"
+            value={selectedDate.toISOString().split("T")[0]}
+            onChange={handleDateChange}
+            className="p-2 border rounded"
+          />
+        </div>
 
         {/* Financial Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard title="Total Sales" value={stats?.total_sales} icon={<FaDollarSign className="text-green-500 text-3xl" />} />
-          <StatCard title="Total Purchases" value={stats?.total_purchases} icon={<FaBox className="text-blue-500 text-3xl" />} />
-          <StatCard title="Total Expenses" value={stats?.total_expenses} icon={<FaChartLine className="text-red-500 text-3xl" />} />
-          <StatCard title="Total Assets Value" value={stats?.total_assets_value} icon={<FaStore className="text-yellow-500 text-3xl" />} />
-          <StatCard title="Profit" value={stats?.profit} icon={<FaChartLine className="text-green-500 text-3xl" />} />
-        </div>
+        <Section title="💰 Financial Overview">
+          <StatsGrid>
+            <StatCard
+              title="Total Sales"
+              value={stats?.[period]?.total_sales ?? "N/A"}
+              icon={<FaDollarSign className="text-green-500 text-3xl" />}
+            />
+            <StatCard
+              title="Total Purchases"
+              value={stats?.[period]?.total_purchases ?? "N/A"}
+              icon={<FaBox className="text-blue-500 text-3xl" />}
+            />
+            <StatCard
+              title="Total Expenses"
+              value={stats?.[period]?.total_expenses ?? "N/A"}
+              icon={<FaChartLine className="text-red-500 text-3xl" />}
+            />
+          </StatsGrid>
+        </Section>
 
-        {/* Client Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <StatCard title="Total Clients" value={stats?.total_clients} icon={<FaUsers className="text-blue-500 text-3xl" />} />
-          <StatCard title="Active Clients" value={stats?.active_clients} icon={<FaCheckCircle className="text-green-500 text-3xl" />} />
-          <StatCard title="Inactive Clients" value={stats?.inactive_clients} icon={<FaTimesCircle className="text-red-500 text-3xl" />} />
-        </div>
-
-        {/* Invoice & Payment Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <StatCard title="Total Invoices" value={stats?.total_invoices} icon={<FaFileInvoiceDollar className="text-indigo-500 text-3xl" />} />
-          <StatCard title="Unpaid Invoices" value={stats?.unpaid_invoices} icon={<FaTimesCircle className="text-red-500 text-3xl" />} />
-          <StatCard title="Total Payments Received" value={`$${stats?.total_payments_received}`} icon={<FaCheckCircle className="text-green-500 text-3xl" />} />
-        </div>
-
-        {/* Periodic Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <StatCard title="Daily Invoices" value={stats?.daily_invoices} icon={<FaFileInvoiceDollar className="text-indigo-500 text-3xl" />} />
-          <StatCard title="Daily Payments" value={`$${stats?.daily_payments}`} icon={<FaCheckCircle className="text-green-500 text-3xl" />} />
-          <StatCard title="Weekly Invoices" value={stats?.weekly_invoices} icon={<FaFileInvoiceDollar className="text-indigo-500 text-3xl" />} />
-          <StatCard title="Weekly Payments" value={`$${stats?.weekly_payments}`} icon={<FaCheckCircle className="text-green-500 text-3xl" />} />
-          <StatCard title="Monthly Invoices" value={stats?.monthly_invoices} icon={<FaFileInvoiceDollar className="text-indigo-500 text-3xl" />} />
-          <StatCard title="Monthly Payments" value={`$${stats?.monthly_payments}`} icon={<FaCheckCircle className="text-green-500 text-3xl" />} />
-          <StatCard title="Annual Invoices" value={stats?.annual_invoices} icon={<FaFileInvoiceDollar className="text-indigo-500 text-3xl" />} />
-          <StatCard title="Annual Payments" value={`$${stats?.annual_payments}`} icon={<FaCheckCircle className="text-green-500 text-3xl" />} />
-        </div>
-
-        {/* Subscription Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <StatCard title="Total Subscriptions" value={stats?.total_subscriptions} icon={<FaUsers className="text-blue-500 text-3xl" />} />
-          <StatCard title="Active Subscriptions" value={stats?.active_subscriptions} icon={<FaCheckCircle className="text-green-500 text-3xl" />} />
-          <StatCard title="Expired Subscriptions" value={stats?.expired_subscriptions} icon={<FaTimesCircle className="text-red-500 text-3xl" />} />
-        </div>
-
-        {/* Customer & Supplier Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <StatCard title="Total Customers" value={stats?.total_customers} icon={<FaUsers className="text-blue-500 text-3xl" />} />
-          <StatCard title="Total Suppliers" value={stats?.total_suppliers} icon={<FaStore className="text-orange-500 text-3xl" />} />
-          <StatCard title="Total Items" value={stats?.total_items} icon={<FaBox className="text-purple-500 text-3xl" />} />
-        </div>
-
-        {/* Assets, Sales, Purchases */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {/*<StatCard title="Most Expensive Asset" value={stats?.most_expensive_asset} icon={<FaStore className="text-yellow-500 text-3xl" />} />
-          <StatCard title="Top Products by Sales" value="not set"icon={<FaChartLine className="text-green-500 text-3xl" />} />
-          <StatCard title="Purchases by Supplier" value="not set" icon={<FaStore className="text-blue-500 text-3xl" />} />
-         */}
-          </div>
-       
-
-        {/* Expenses */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        <StatCard title="Expenses by Type" value="not set" icon={<FaChartLine className="text-red-500 text-3xl" />} />
-        <StatCard title="Average Profit Margin" value="not set" icon={<FaChartLine className="text-green-500 text-3xl" />} />
-        </div>
+        {/* General Stats */}
+        <Section title="🌍 General Stats">
+          <StatsGrid>
+            <StatCard
+              title="Total Clients"
+              value={stats?.general?.total_clients ?? "N/A"}
+              icon={<FaUsers className="text-blue-500 text-3xl" />}
+            />
+            <StatCard
+              title="Active Clients"
+              value={stats?.general?.active_clients ?? "N/A"}
+              icon={<FaCheckCircle className="text-green-500 text-3xl" />}
+            />
+          </StatsGrid>
+          <StatsGrid>
+            
+            <StatCard
+              title="Assets Value"
+              value={stats?.general?.total_assets_value ?? "N/A"}
+              icon={<FaCheckCircle className="text-green-500 text-3xl" />}
+            />
+          </StatsGrid>
+        </Section>
       </div>
     </DashboardLayout>
   );
 }
 
-function StatCard({ title, value, icon }: { title: string, value: any, icon: JSX.Element }) {
+// --- Reusable components ---
+function StatCard({ title, value, icon }: { title: string; value: any; icon: JSX.Element }) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow flex items-center space-x-4">
+    <div className="bg-white p-5 rounded-xl shadow-md flex items-center space-x-4 hover:shadow-lg transition">
       {icon}
       <div>
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-xl font-bold">{value}</p>
+        <h3 className="text-sm text-gray-500">{title}</h3>
+        <p className="text-xl font-bold text-gray-800">{value}</p>
       </div>
+    </div>
+  );
+}
+
+function StatsGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{children}</div>;
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-8">
+      <h3 className="text-xl font-semibold mb-4">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-6">
+      <h4 className="text-lg font-medium mb-2">{title}</h4>
+      {children}
     </div>
   );
 }

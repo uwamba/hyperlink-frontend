@@ -72,6 +72,7 @@ export default function SubscribeClient() {
   };
 
   const openEditModal = (subscription: any) => {
+    console.log("Opening edit modal for subscription:", subscription); // Debug log
     setEditingSub(subscription);
     setEditForm({
       client_id: subscription.client_id,
@@ -86,20 +87,23 @@ export default function SubscribeClient() {
   const updateSubscription = async () => {
     if (!editingSub) return;
 
+    const formDataToSend = new FormData();
+    for (const [key, value] of Object.entries(editForm)) {
+      formDataToSend.append(key, value);
+    }
+
     try {
       const res = await fetch(`${API_URL}/subscriptions/${editingSub.id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(editForm),
+        body: formDataToSend,
       });
 
       if (!res.ok) throw new Error("Update failed");
 
       const json = await res.json();
-
       setSubscriptions((prev) =>
         prev.map((sub) => (sub.id === editingSub.id ? json.data : sub))
       );
@@ -111,6 +115,7 @@ export default function SubscribeClient() {
   };
 
   const confirmDeleteSubscription = (id: number) => {
+    console.log("Confirming delete for subscription ID:", id); // Debug log
     setSubscriptionToDelete(id);
     setShowDeleteModal(true);
   };
@@ -137,6 +142,7 @@ export default function SubscribeClient() {
   };
 
   const handleGenerateInvoice = async (subscriptionId: number) => {
+    console.log("Generating invoice for subscription ID:", subscriptionId); // Debug log
     try {
       const res = await fetch(`${API_URL}/generate-invoice/${subscriptionId}`, {
         method: "POST",
@@ -161,6 +167,7 @@ export default function SubscribeClient() {
   };
 
   const handleDownloadContract = async (subscriptionId: number) => {
+    console.log("Downloading contract for subscription ID:", subscriptionId); // Debug log
     try {
       const res = await fetch(`${API_URL}/download-contract/${subscriptionId}`, {
         method: "GET",
@@ -248,6 +255,110 @@ export default function SubscribeClient() {
       </div>
 
       {/* Edit and Delete Modals remain unchanged */}
+      {/* Edit Modal */}
+{showEditModal && (
+  <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+      <h2 className="text-lg font-semibold mb-4">Edit Subscription</h2>
+      <form>
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Client</label>
+          <input
+            type="text"
+            name="client_id"
+            value={editForm.client_id}
+            onChange={handleEditChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Plan</label>
+          <input
+            type="text"
+            name="plan_id"
+            value={editForm.plan_id}
+            onChange={handleEditChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Start Date</label>
+          <input
+            type="date"
+            name="start_date"
+            value={editForm.start_date}
+            onChange={handleEditChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium">End Date</label>
+          <input
+            type="date"
+            name="end_date"
+            value={editForm.end_date}
+            onChange={handleEditChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Status</label>
+          <select
+            name="status"
+            value={editForm.status}
+            onChange={handleEditChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowEditModal(false)}
+            className="bg-gray-400 text-white px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={updateSubscription}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+{/* Delete Confirmation Modal */}
+{showDeleteModal && (
+  <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+      <h2 className="text-lg font-semibold mb-4">Are you sure you want to delete this subscription?</h2>
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setShowDeleteModal(false)}
+          className="bg-gray-400 text-white px-4 py-2 rounded"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={deleteSubscription}
+          className="bg-red-500 text-white px-4 py-2 rounded"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </DashboardLayout>
   );
 }

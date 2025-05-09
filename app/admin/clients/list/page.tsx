@@ -154,12 +154,8 @@ export default function ClientList() {
                       <td className="border px-4 py-2">{client.phone}</td>
                       <td className="border px-4 py-2">{client.address}</td>
                       <td className="border px-4 py-2 flex gap-2"> {/* Adjusted flex layout */}
-                        <button className="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600">
-                          Consolidated Invoice
-                        </button>
-                        <button className="bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600">
-                          View All Invoices
-                        </button>
+                       
+                       
                         <button
                           className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
                           onClick={() => openEditModal(client)}

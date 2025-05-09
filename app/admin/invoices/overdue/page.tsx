@@ -17,6 +17,7 @@ export default function OverdueInvoices() {
     payment_method: "MPESA",
     transaction_id: "",
   });
+
   const handleGenerateInvoice = async (subscriptionId) => {
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -24,7 +25,6 @@ export default function OverdueInvoices() {
     }
     setAuthToken(token);
     try {
-      // Fetch the PDF from the backend
       const response = await fetch(`${API_URL}/download-invoice/${subscriptionId}`, {
         method: 'POST',
         headers: {
@@ -33,13 +33,11 @@ export default function OverdueInvoices() {
         },
       });
 
-      // Check if the response is OK (successful)
       if (response.ok) {
-        // Create a Blob object to trigger the download
         const blob = await response.blob();
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `invoice_${subscriptionId}.pdf`; // Name of the downloaded file
+        link.download = `invoice_${subscriptionId}.pdf`;
         link.click();
       } else {
         alert('Failed to generate invoice');
@@ -49,6 +47,7 @@ export default function OverdueInvoices() {
       alert('An error occurred while generating the invoice');
     }
   };
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -88,7 +87,7 @@ export default function OverdueInvoices() {
   const openPaymentModal = (invoice: any) => {
     setSelectedInvoice(invoice);
     setPaymentData({
-      amount_paid: invoice.amount, // Default full amount
+      amount_paid: invoice.amount, 
       payment_method: "MPESA",
       transaction_id: "",
     });
@@ -139,6 +138,33 @@ export default function OverdueInvoices() {
     }
   };
 
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    if (!authToken) return;
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this invoice?");
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        setInvoices((prevInvoices) =>
+          prevInvoices.filter((invoice) => invoice.id !== invoiceId)
+        );
+        alert("Invoice deleted successfully.");
+      } else {
+        throw new Error("Failed to delete invoice.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred while deleting the invoice.");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="container mx-auto p-6">
@@ -147,66 +173,74 @@ export default function OverdueInvoices() {
         {loading ? (
           <p>Loading...</p>
         ) : (
-          <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th className="border px-4 py-2">Invoice No</th>
-                <th className="border px-4 py-2">Client ID</th>
-                <th className="border px-4 py-2">Amount</th>
-                <th className="border px-4 py-2">Due Date</th>
-                <th className="border px-4 py-2">Status</th>
-                <th className="border px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {Array.isArray(invoices) && invoices.length > 0 ? (
-                invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border hover:bg-gray-100">
-                    <td className="border px-4 py-2">{invoice.invoice_no}</td>
-                    <td className="border px-4 py-2">{invoice.client_id}</td>
-                    <td className="border px-4 py-2">
-                      Ksh {parseFloat(invoice.amount).toLocaleString()}
-                    </td>
-                    <td className="border px-4 py-2">{invoice.due_date}</td>
-                    <td className="border px-4 py-2">
-                      <span
-                        className={`px-2 py-1 rounded text-sm ${
-                          invoice.status === "paid"
-                            ? "bg-green-500 text-white"
-                            : invoice.status === "partial"
-                            ? "bg-yellow-500 text-white"
-                            : "bg-red-500 text-white"
-                        }`}
-                      >
-                        {invoice.status}
-                      </span>
-                    </td>
-                    <td className="border px-4 py-2 flex gap-2">
-                     <button 
-                      onClick={() => handleGenerateInvoice(invoice.id)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-                        View Invoice 
-                      </button>
-                      {invoice.status !== "paid" && (
-                        <button
-                          className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
-                          onClick={() => openPaymentModal(invoice)}
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+              <thead className="bg-gray-800 text-white">
+                <tr>
+                  <th className="border px-4 py-2">Invoice No</th>
+                  <th className="border px-4 py-2">Client ID</th>
+                  <th className="border px-4 py-2">Amount</th>
+                  <th className="border px-4 py-2">Due Date</th>
+                  <th className="border px-4 py-2">Status</th>
+                  <th className="border px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {Array.isArray(invoices) && invoices.length > 0 ? (
+                  invoices.map((invoice) => (
+                    <tr key={invoice.id} className="border hover:bg-gray-100">
+                      <td className="border px-4 py-2">{invoice.invoice_no}</td>
+                      <td className="border px-4 py-2">{invoice.client_id}</td>
+                      <td className="border px-4 py-2">
+                        Ksh {parseFloat(invoice.amount).toLocaleString()}
+                      </td>
+                      <td className="border px-4 py-2">{invoice.due_date}</td>
+                      <td className="border px-4 py-2">
+                        <span
+                          className={`px-2 py-1 rounded text-sm ${
+                            invoice.status === "paid"
+                              ? "bg-green-500 text-white"
+                              : invoice.status === "partial"
+                              ? "bg-yellow-500 text-white"
+                              : "bg-red-500 text-white"
+                          }`}
                         >
-                          Pay Invoice
+                          {invoice.status}
+                        </span>
+                      </td>
+                      <td className="border px-4 py-2 flex gap-2">
+                        <button 
+                          onClick={() => handleGenerateInvoice(invoice.id)}
+                          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                          View Invoice 
                         </button>
-                      )}
+                        {invoice.status !== "paid" && (
+                          <button
+                            className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+                            onClick={() => openPaymentModal(invoice)}
+                          >
+                            Pay Invoice
+                          </button>
+                        )}
+                        <button
+                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                          onClick={() => handleDeleteInvoice(invoice.id)}
+                        >
+                          Delete Invoice
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-4">
+                      No unpaid invoices found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-4">
-                    No unpaid invoices found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Payment Modal */}

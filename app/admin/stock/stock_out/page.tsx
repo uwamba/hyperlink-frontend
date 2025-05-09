@@ -39,26 +39,24 @@ export default function ItemList() {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     setAuthToken(token);
-    fetchItems(token);
-  }, []);
-
-  const fetchItems = async (token: string | null) => {
-    if (!token) {
+    if (token) fetchItems(token);
+    else {
       setError("Authentication required. Please log in.");
       setLoading(false);
-      return;
     }
+  }, []);
 
+  const fetchItems = async (token: string) => {
     try {
-      const response = await fetch(`${API_URL}/items`, {
+      const res = await fetch(`${API_URL}/items/outStock`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const json = await response.json();
+      const json = await res.json();
 
-      if (response.ok && Array.isArray(json.data)) {
+      if (res.ok && Array.isArray(json.data)) {
         setItems(json.data);
       } else {
         throw new Error(json.message || "Failed to load items");
@@ -80,14 +78,17 @@ export default function ItemList() {
     try {
       const res = await fetch(`${API_URL}/items/${itemToDelete}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       if (!res.ok) throw new Error("Failed to delete item");
       setItems((prev) => prev.filter((item) => item.id !== itemToDelete));
-      setShowDeleteModal(false);
-      setItemToDelete(null);
     } catch (err) {
       setError("Failed to delete item.");
+    } finally {
+      setShowDeleteModal(false);
+      setItemToDelete(null);
     }
   };
 
@@ -108,7 +109,8 @@ export default function ItemList() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setEditForm({ ...editForm, [name]: name === "quantity" || name === "price" ? Number(value) : value });
+    const newValue = name === "quantity" || name === "price" ? Number(value) : value;
+    setEditForm((prev) => ({ ...prev, [name]: newValue }));
   };
 
   const updateItem = async () => {
@@ -142,11 +144,13 @@ export default function ItemList() {
     <DashboardLayout>
       <div className="container mx-auto p-6">
         <h2 className="text-2xl font-bold mb-4">Item List</h2>
-        {error && <p className="text-red-500">{error}</p>}
+
+        {error && <p className="text-red-600 mb-4">{error}</p>}
+
         {loading ? (
           <p>Loading...</p>
         ) : (
-          <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+          <table className="w-full border border-gray-300 rounded-lg shadow-md">
             <thead className="bg-gray-800 text-white">
               <tr>
                 <th className="border px-4 py-2">Name</th>
@@ -160,29 +164,27 @@ export default function ItemList() {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {items.length > 0 ? (
+              {items.length ? (
                 items.map((item) => (
-                  <tr key={item.id} className="border hover:bg-gray-100">
+                  <tr key={item.id} className="hover:bg-gray-100">
                     <td className="border px-4 py-2">{item.name}</td>
                     <td className="border px-4 py-2">{item.serial_number}</td>
                     <td className="border px-4 py-2">{item.description}</td>
                     <td className="border px-4 py-2">{item.quantity}</td>
-                    <td className="border px-4 py-2">
-                      {item.price.toLocaleString()} RWF
-                    </td>
+                    <td className="border px-4 py-2">{item.price.toLocaleString()} RWF</td>
                     <td className="border px-4 py-2">{item.brand}</td>
                     <td className="border px-4 py-2">
                       {new Date(item.created_at).toLocaleString()}
                     </td>
                     <td className="border px-4 py-2 flex gap-2">
                       <button
-                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
                         onClick={() => openEditModal(item)}
                       >
                         Edit
                       </button>
                       <button
-                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                         onClick={() => confirmDeleteItem(item.id)}
                       >
                         Delete
@@ -193,7 +195,7 @@ export default function ItemList() {
               ) : (
                 <tr>
                   <td colSpan={8} className="text-center py-4">
-                    No items found
+                    No items found.
                   </td>
                 </tr>
               )}
@@ -205,22 +207,22 @@ export default function ItemList() {
       {/* Delete Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
             <p>Are you sure you want to delete this item?</p>
-            <div className="flex justify-end gap-4 mt-6">
+            <div className="flex justify-end mt-6 gap-4">
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
                   setItemToDelete(null);
                 }}
-                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
               >
                 Cancel
               </button>
               <button
                 onClick={deleteItem}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
               >
                 Confirm
               </button>
@@ -230,54 +232,54 @@ export default function ItemList() {
       )}
 
       {/* Edit Modal */}
-      {showEditModal && editingItem && (
+      {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Edit Item</h2>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Edit Item</h3>
             <div className="flex flex-col gap-4">
               <input
                 name="name"
                 value={editForm.name}
                 onChange={handleEditChange}
-                placeholder="Name"
                 className="border px-3 py-2 rounded"
+                placeholder="Name"
               />
               <input
                 name="serial_number"
                 value={editForm.serial_number}
                 onChange={handleEditChange}
-                placeholder="Serial Number"
                 className="border px-3 py-2 rounded"
+                placeholder="Serial Number"
               />
               <textarea
                 name="description"
                 value={editForm.description}
                 onChange={handleEditChange}
-                placeholder="Description"
                 className="border px-3 py-2 rounded"
+                placeholder="Description"
               />
               <input
                 name="quantity"
                 type="number"
                 value={editForm.quantity}
                 onChange={handleEditChange}
-                placeholder="Quantity"
                 className="border px-3 py-2 rounded"
+                placeholder="Quantity"
               />
               <input
                 name="price"
                 type="number"
                 value={editForm.price}
                 onChange={handleEditChange}
-                placeholder="Price"
                 className="border px-3 py-2 rounded"
+                placeholder="Price"
               />
               <input
                 name="brand"
                 value={editForm.brand}
                 onChange={handleEditChange}
-                placeholder="Brand"
                 className="border px-3 py-2 rounded"
+                placeholder="Brand"
               />
               <div className="flex justify-end gap-4">
                 <button
@@ -285,13 +287,13 @@ export default function ItemList() {
                     setShowEditModal(false);
                     setEditingItem(null);
                   }}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={updateItem}
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                 >
                   Save
                 </button>

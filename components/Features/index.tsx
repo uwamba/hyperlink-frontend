@@ -2,29 +2,23 @@ import SectionTitle from "../Common/SectionTitle";
 import SingleFeature from "./SingleFeature";
 import featuresData from "./featuresData";
 
-const Features = () => {
-  return (
-    <>
-      <section
-        id="Services"
-        className="py-16 md:py-20 mx-20 lg:py-28 mt-[120px]" // Added mt-[120px] to push the section down
-      >
-        <div className="container overflow-visible">
-          <SectionTitle
-            title="Services"
-            paragraph="There are many variations of passages of Lorem Ipsum available but the majority have suffered alteration in some form."
-            center
-          />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
-            {featuresData.map((feature) => (
-              <SingleFeature key={feature.id} feature={feature} />
-            ))}
-          </div>
+const FeaturesSection = () => {
+  return (
+    <section className="py-16 bg-gray-50 dark:bg-gray-950" id="Services">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-10">
+          Our IT Services
+        </h2>
+
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {featuresData.map((feature) => (
+            <SingleFeature key={feature.id} feature={feature} />
+          ))}
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 };
 
-export default Features;
+export default FeaturesSection;

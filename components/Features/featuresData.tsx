@@ -3,31 +3,52 @@ import { Feature } from "@/types/feature";
 const featuresData: Feature[] = [
   {
     id: 1,
-    icon: <i className="fas fa-satellite-dish text-2xl"></i>,  // Satellite Internet
-    title: "Satellite Internet",
+    icon: <i className="fas fa-user-tie text-2xl"></i>,  // IT Consultancy
+    title: "IT Consultancy",
     paragraph:
-      "We offer high-speed, reliable satellite internet powered by Starlink (SpaceX) technology. This service delivers fast, consistent internet access even in the most remote and underserved areas, making it ideal for businesses, households, and organizations in rural or hard-to-reach locations. Our satellite internet ensures seamless connectivity for video conferencing, remote work, and other internet-driven activities, providing a robust solution to modern communication needs.",
+      "We offer professional IT consultancy services to help businesses and organizations make strategic technology decisions. From infrastructure planning to cybersecurity assessments, our experts provide tailored solutions to align IT systems with your goals.",
   },
   {
     id: 2,
-    icon: <i className="fas fa-cogs text-2xl"></i>,  // Satellite Kits
-    title: "Satellite Kits",
+    icon: <i className="fas fa-home text-2xl"></i>,  // Smart Home
+    title: "Smart Home Solutions",
     paragraph:
-      "We provide complete satellite kits that enable seamless connectivity to our satellite internet service. These kits include everything you need for a quick and easy setup, from satellite dishes and mounting equipment to routers and cables. Designed for both residential and commercial use, our kits are optimized for reliability and ease of installation, ensuring you can get online quickly and efficiently without technical hassle.",
+      "Transform your home with intelligent automation systems. Our smart home solutions include security cameras, smart lighting, remote-controlled appliances, and voice integration — all designed for convenience, safety, and energy efficiency.",
   },
   {
     id: 3,
-    icon: <i className="fas fa-plug text-2xl"></i>,  // Networking Accessories
-    title: "Networking Accessories",
+    icon: <i className="fas fa-network-wired text-2xl"></i>,  // Network Installations
+    title: "Network Installations",
     paragraph:
-      "We supply a wide range of high-quality networking tools and accessories to enhance the connectivity experience. From Wi-Fi extenders and high-performance routers to Ethernet cables and switches, our products are designed to boost your internet signal, improve network security, and optimize your overall internet experience. Whether you're building a home network, upgrading a business setup, or enhancing a remote office.",
+      "We design and implement secure and scalable network infrastructures for homes, businesses, and institutions. Our services include cabling, router/switch configuration, wireless access point setup, and performance optimization.",
   },
   {
     id: 4,
-    icon: <i className="fas fa-network-wired text-2xl"></i>,  // Networking
-    title: "Networking",
+    icon: <i className="fas fa-vials text-2xl"></i>,  // Lab Setup
+    title: "Computer Lab Setup",
     paragraph:
-      "We provide top-tier networking solutions, including wired and wireless connectivity setups, tailored for businesses, households, and remote offices. Whether you need a high-speed internet connection, secure network infrastructure, or optimized performance for your operations, our networking services are designed to meet modern demands.",
+      "We offer end-to-end computer lab setup services for schools, training centers, and offices. Our team handles hardware procurement, network layout, system installation, and configuration for a smooth learning or working environment.",
+  },
+  {
+    id: 5,
+    icon: <i className="fas fa-server text-2xl"></i>,  // Server Room
+    title: "Server Room Installations",
+    paragraph:
+      "Ensure stability and efficiency with our expert server room design and installation services. We manage layout planning, cabling, cooling systems, and rack setup to support business-critical infrastructure.",
+  },
+  {
+    id: 6,
+    icon: <i className="fas fa-truck text-2xl"></i>,  // Server Delivery
+    title: "Server & Network Equipment Delivery",
+    paragraph:
+      "We deliver and install servers and networking hardware with professional care and precision. From small business setups to enterprise-scale deployments, our logistics and technical team ensure everything is ready to run.",
+  },
+  {
+    id: 7,
+    icon: <i className="fas fa-tools text-2xl"></i>,  // Configuration
+    title: "Equipment Configuration",
+    paragraph:
+      "Our technicians configure routers, firewalls, switches, and access points to ensure optimal network performance and security. Whether deploying new infrastructure or upgrading existing setups, we tailor configurations to your environment.",
   },
 ];
 

@@ -1,95 +1,98 @@
 "use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
 
-const images = [
-  "/images/hero/bg1.jpg",
-  "/images/hero/bg2.jpg",
-  "/images/hero/bg3.jpg",
+import { useState, useEffect } from "react";
+
+// Array containing objects with image and corresponding text content
+const slides = [
+  {
+    image: "/images/hero/bg1.jpg",
+    heading: "Experience Lightning-Fast Internet & Smart Solutions!",
+    description:
+      "Enjoy seamless connectivity with high-speed internet, smart home automation, and top-tier networking solutions.",
+  },
+  {
+    image: "/images/hero/bg2.jpg",
+    heading: "Stay Connected, Anytime, Anywhere!",
+    description:
+      "Reliable internet and smart solutions for your home or business—never miss a beat.",
+  },
+  {
+    image: "/images/hero/bg3.jpg",
+    heading: "Innovative Technology for a Better Tomorrow",
+    description:
+      "Empowering your life with cutting-edge technology and seamless connectivity. Future-ready solutions.",
+  },
 ];
 
 const Hero = () => {
-  const [currentImage, setCurrentImage] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % images.length);
-    }, 5000); // Change image every 5 seconds
-
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
-  const scrollToSection = (id) => {
+
+  const scrollToSection = (id: string) => {
     const section = document.getElementById(id);
     if (section) {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
-
   return (
     <section
       id="Home"
-      className="relative z-0 bg-white min-h-screen flex flex-col justify-center items-center pt-[100px] md:pt-[140px] overflow-visible"
+      className="relative z-0 pt-24 pb-40 sm:pt-28 sm:pb-48 md:pt-32 md:pb-56 bg-white"
     >
-      {/* Background Image Slider */}
+      {/* Background Slider */}
       <div className="absolute inset-0 z-[-10]">
-        {images.map((image, index) => (
+        {slides.map((slide, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === currentImage ? "opacity-100" : "opacity-0"
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentSlide ? "opacity-100" : "opacity-0"
             }`}
             style={{
-              backgroundImage: `url(${image})`,
+              backgroundImage: `url(${slide.image})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           />
         ))}
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black opacity-40" />
+        <div className="absolute inset-0 bg-black bg-opacity-60" />
       </div>
 
       {/* Hero Content */}
-      <div className="container relative z-10 text-center px-4">
-        <h1 className="mb-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl max-w-[90%] sm:max-w-[80%] md:max-w-[60%] mx-auto">
-          Experience Lightning-Fast Internet & Smart Solutions!
+      <div
+        className={`relative z-10 text-center px-4 max-w-screen-xl mx-auto transition-transform duration-1000 ${
+          currentSlide === 0 ? "transform translate-x-0" : "transform translate-x-4"
+        }`}
+      >
+        <h1 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-snug drop-shadow">
+          {slides[currentSlide].heading}
         </h1>
-        <p className="mb-8 text-lg text-white sm:text-xl md:text-2xl max-w-[85%] sm:max-w-[75%] md:max-w-[55%] mx-auto">
-          Enjoy seamless connectivity with high-speed internet, smart home automation, 
-          and top-tier networking solutions.
+        <p className="mb-8 text-sm sm:text-base md:text-lg text-white max-w-xl mx-auto leading-relaxed">
+          {slides[currentSlide].description}
         </p>
       </div>
 
-      {/* Overlapping Call to Action Section */}
-      <section className="absolute w-[90%] sm:w-[80%] md:w-[70%] left-1/2 transform -translate-x-1/2 bottom-[-100px] sm:bottom-[-120px] md:bottom-[-150px] text-center bg-primary py-8 sm:py-10 md:py-12 rounded-lg shadow-lg">
-        <div className="cta-content px-4 flex flex-col items-center">
-          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-3 sm:mb-4">
-            Get Started Today!
+      {/* CTA Section */}
+      <div className="absolute w-full bottom-[-110px] px-4">
+        <div className="bg-blue-600 rounded-xl shadow-lg px-6 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12 text-white text-center max-w-xl mx-auto">
+          <h2 className="text-base sm:text-lg font-semibold mb-3">
+          Our Mission
           </h2>
-          <p className="text-sm sm:text-lg text-white mb-4 sm:mb-6 max-w-[90%] sm:max-w-[75%]">
-          Our competitive edge lies in our 
-          advanced technology, which detects 
-          disruptions before they impact our 
-          clients, allowing us to address issues 
-          proactively. Backed by over a decade of 
-          experience in networking and customer 
-          service, we ensure that our clients 
-          receive the full value of their investment, 
-          with service quality they can rely on.
-
+          <p className="text-xs sm:text-sm md:text-base mb-4 leading-relaxed">
+          Our mission is to empower businesses with cutting-edge technology, delivering innovative and scalable solutions that drive growth and success.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            <button
-              onClick={() => scrollToSection("pricing")}
-              className="rounded-lg bg-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold text-primary duration-300 ease-in-out hover:bg-gray-200"
-            >
-              Check our prices
-            </button>
-           
-          </div>
+          
         </div>
-      </section>
+        
+      </div>
+
+      {/* Divider */}
     </section>
   );
 };

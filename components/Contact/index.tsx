@@ -51,11 +51,11 @@ export default function Contact() {
 
   return (
     <section
-      id="Support"
+      id="Contact Us"
       className="overflow-hidden py-16 md:py-10 lg:py-8 flex justify-center items-center"
     >
       <div className="container flex justify-center">
-        <div className="w-full max-w-[1000px] px-4">
+        <div className="w-full max-w-[1200px] ">
           <div className="shadow-lg rounded-sm bg-white px-8 py-11">
             <h2 className="mb-3 text-2xl font-bold text-black sm:text-3xl">
               Need Help? Open a Ticket

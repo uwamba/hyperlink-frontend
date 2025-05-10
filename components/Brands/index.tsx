@@ -36,7 +36,11 @@ const SingleBrand = ({ brand }: { brand: Brand }) => {
         rel="nofollow noreferrer"
         className="relative h-10 w-full opacity-100 transition hover:opacity-100 hover:grayscale-0 dark:opacity-60 dark:hover:opacity-100"
       >
-        <img src={image} alt={name}  />
+        <img
+          src={image}
+          alt={name}
+          className="w-[100px] h-[100px] object-contain mx-auto" // Ensure uniform size for all logos
+        />
       </a>
     </div>
   );

@@ -113,8 +113,21 @@ export default function Dashboard() {
               value={stats?.[period]?.total_expenses ?? "N/A"}
               icon={<FaChartLine className="text-red-500 text-3xl" />}
             />
+             <StatCard
+              title="Profit"
+              value={stats?.[period]?.profit ?? "N/A"}
+              icon={<FaChartLine className="text-red-500 text-3xl" />}
+            />
           </StatsGrid>
         </Section>
+
+        {/* 'total_sales' => $totalSales,
+            'total_purchases' => $totalPurchases,
+            'total_expenses' => $totalExpenses,
+            'profit' => $profit,
+            'average_profit_margin' => $averageProfitMargin,
+            'expenses_by_type' => $expensesByType,
+            'purchases_by_supplier' => $purchasesBySupplier,*/}
 
         {/* General Stats */}
         <Section title="🌍 General Stats">
@@ -129,15 +142,29 @@ export default function Dashboard() {
               value={stats?.general?.active_clients ?? "N/A"}
               icon={<FaCheckCircle className="text-green-500 text-3xl" />}
             />
-          </StatsGrid>
-          <StatsGrid>
-            
-            <StatCard
+             <StatCard
               title="Assets Value"
               value={stats?.general?.total_assets_value ?? "N/A"}
               icon={<FaCheckCircle className="text-green-500 text-3xl" />}
             />
+            <StatCard
+              title="Total Suppliers"
+              value={stats?.general?.total_suppliers ?? "N/A"}
+              icon={<FaUsers className="text-green-500 text-3xl" />}
+            />
+            <StatCard
+              title="Total Items"
+              value={stats?.general?.total_items ?? "N/A"}
+              icon={<FaCheckCircle className="text-green-500 text-3xl" />}
+            />
+            <StatCard
+              title="Total Subscriptions"
+              value={stats?.general?.total_subscriptions ?? "N/A"}
+              icon={<FaUsers className="text-green-500 text-3xl" />}
+            />
+
           </StatsGrid>
+        
         </Section>
       </div>
     </DashboardLayout>

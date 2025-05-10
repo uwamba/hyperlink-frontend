@@ -155,21 +155,19 @@ const Header = () => {
                   </ul>
                 </nav>
               </div>
-              <div className="flex items-center justify-end pr-16 lg:pr-0">
-                <Link
-                  href="/signin"
-                  className="hidden px-7 py-3 text-base font-medium text-dark hover:opacity-70 dark:text-white md:block"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="ease-in-up shadow-btn hover:shadow-btn-hover hidden rounded-sm bg-primary px-8 py-3 text-base font-medium text-white transition duration-300 hover:bg-opacity-90 md:block md:px-9 lg:px-6 xl:px-9"
-                >
-                  Sign Up
-                </Link>
+              <div className="flex items-center justify-between pr-16 lg:pr-0 space-x-4">
+                {/* Contact Info */}
+                <div className="text-sm text-dark">
+                  <span>Email: <a href="mailto:contact@yourdomain.com">contact@yourdomain.com</a></span><br />
+                  <span>Tel: <a href="tel:+1234567890">+123 456 7890</a></span>
+                </div>
                 <div>
-                  <ThemeToggler />
+                  <Link
+                    href="/signin"
+                    className="hidden px-7 py-3 text-base font-medium text-dark hover:opacity-70 dark:text-white md:block"
+                  >
+                    Sign In
+                  </Link>
                 </div>
               </div>
             </div>

@@ -1,16 +1,11 @@
-import AboutSectionOne from "@/components/About/AboutSectionOne";
-import AboutSectionTwo from "@/components/About/AboutSectionTwo";
-import Blog from "@/components/Blog";
+
 import Brands from "@/components/Brands";
-import ScrollUp from "@/components/Common/ScrollUp";
 import Contact from "@/components/Contact";
 import Features from "@/components/Features";
 import Hero from "@/components/Hero";
-import Pricing from "@/components/Pricing";
 import WebsiteLayout from '@/components/layouts/WebsiteLayout';
-import Testimonials from "@/components/Testimonials";
-import Video from "@/components/Video";
 import { Metadata } from "next";
+import AboutPage from "./about/page";
 
 export const metadata: Metadata = {
   title: "Hyperlink Network",
@@ -21,10 +16,9 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <WebsiteLayout>
-      <ScrollUp />
       <Hero />
+      <AboutPage />
       <Features />     
-      <Pricing />
       <Contact />
       <Brands />
       </WebsiteLayout>

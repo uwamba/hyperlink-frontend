@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const Footer = () => {
   return (
-    <>
+    
       <footer
         className="wow fadeInUp dark:bg-gray-dark relative z-10 bg-white pt-16 md:pt-20 lg:pt-24"
         data-wow-delay=".1s"
@@ -92,22 +92,8 @@ const Footer = () => {
                   Useful Links
                 </h2>
                 <ul>
-                  <li>
-                    <a
-                      href="/blogs"
-                      className="dark:text-body-color-dark mb-4 inline-block text-base text-body-color duration-300 hover:text-primary dark:hover:text-primary"
-                    >
-                      contactus
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/pricing"
-                      className="dark:text-body-color-dark mb-4 inline-block text-base text-body-color duration-300 hover:text-primary dark:hover:text-primary"
-                    >
-                      Pricing
-                    </a>
-                  </li>
+                  
+                  
                   <li>
                     <a
                       href="/about"
@@ -168,14 +154,7 @@ const Footer = () => {
                       Terms of Use
                     </a>
                   </li>
-                  <li>
-                    <a
-                      href="/about"
-                      className="dark:text-body-color-dark mb-4 inline-block text-base text-body-color duration-300 hover:text-primary dark:hover:text-primary"
-                    >
-                      About
-                    </a>
-                  </li>
+                 
                 </ul>
               </div>
             </div>
@@ -191,7 +170,7 @@ const Footer = () => {
         </div>
         
       </footer>
-    </>
+    
   );
 };
 

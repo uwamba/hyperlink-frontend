@@ -158,8 +158,8 @@ const Header = () => {
               <div className="flex items-center justify-between pr-16 lg:pr-0 space-x-4">
                 {/* Contact Info */}
                 <div className="text-sm text-dark">
-                  <span>Email: <a href="mailto:contact@yourdomain.com">contact@yourdomain.com</a></span><br />
-                  <span>Tel: <a href="tel:+1234567890">+123 456 7890</a></span>
+                  <span>Email: <a href="mailto:contact@yourdomain.com">sales@hyperlinknetwork.com</a></span><br />
+                  <span>Tel: <a href="tel:+1234567890">+250 798 977 211</a></span>
                 </div>
                 <div>
                   <Link

@@ -50,6 +50,13 @@ const featuresData: Feature[] = [
     paragraph:
       "Our technicians configure routers, firewalls, switches, and access points to ensure optimal network performance and security. Whether deploying new infrastructure or upgrading existing setups, we tailor configurations to your environment.",
   },
+  {
+    id: 8,
+    icon: <i className="fas fa-headset text-2xl"></i>,  // Call Center
+    title: "Call Center Setup",
+    paragraph:
+      "We provide complete call center setup solutions including IP telephony, CRM integration, headset provisioning, and training. Whether you're launching customer support or sales operations, we build efficient systems for high-performance communication.",
+  },
 ];
 
 export default featuresData;

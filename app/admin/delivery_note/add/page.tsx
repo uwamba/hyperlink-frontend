@@ -13,21 +13,32 @@ interface Item {
   brand: string;
 }
 
+interface Client {
+  id: number;
+  name: string;
+}
+
 export default function AddDeliveryNote() {
   const [items, setItems] = useState<Item[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [selectedItems, setSelectedItems] = useState<
     { item_id: number; name: string; quantity: number; max_quantity: number }[]
   >([]);
+
   const [noteNumber, setNoteNumber] = useState<string>(uuidv4().slice(0, 8).toUpperCase());
-  const [recipient, setRecipient] = useState<string>("");
   const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchItems();
+    fetchClients();
   }, []);
 
   useEffect(() => {
@@ -40,6 +51,17 @@ export default function AddDeliveryNote() {
       setFilteredItems([]);
     }
   }, [searchTerm, items]);
+
+  useEffect(() => {
+    if (clientSearchTerm.trim()) {
+      const results = clients.filter((client) =>
+        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
+      );
+      setFilteredClients(results);
+    } else {
+      setFilteredClients([]);
+    }
+  }, [clientSearchTerm, clients]);
 
   const fetchItems = async () => {
     const authToken = localStorage.getItem("authToken");
@@ -63,6 +85,28 @@ export default function AddDeliveryNote() {
     }
   };
 
+  const fetchClients = async () => {
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) return;
+
+    try {
+      const res = await fetch(`${API_URL}/clients`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.data)) {
+        setClients(data.data);
+      } else {
+        setError("Failed to load clients");
+      }
+    } catch (err) {
+      setError("Something went wrong loading clients.");
+    }
+  };
+
   const addItemToNote = (item: Item) => {
     if (selectedItems.find((i) => i.item_id === item.id)) return;
 
@@ -75,7 +119,7 @@ export default function AddDeliveryNote() {
         max_quantity: item.quantity,
       },
     ]);
-    setSearchTerm(""); // Clear input
+    setSearchTerm("");
   };
 
   const handleQuantityChange = (itemId: number, quantity: number) => {
@@ -94,10 +138,14 @@ export default function AddDeliveryNote() {
     const authToken = localStorage.getItem("authToken");
     if (!authToken) return setError("Please log in first.");
 
+    if (!selectedClient) {
+      return setError("Please select a client.");
+    }
+
     const payload = {
-      delivery_number: noteNumber, // Changed from note_number to delivery_number
-      recipient,
+      delivery_number: noteNumber,
       delivery_date: deliveryDate,
+      client_id: selectedClient.id,
       delivery_note_items: selectedItems.map((item) => ({
         item_id: item.item_id,
         quantity: item.quantity,
@@ -120,8 +168,9 @@ export default function AddDeliveryNote() {
         setSuccess("Delivery note created successfully!");
         setSelectedItems([]);
         setNoteNumber(uuidv4().slice(0, 8).toUpperCase());
-        setRecipient("");
         setDeliveryDate("");
+        setSelectedClient(null);
+        setClientSearchTerm("");
       } else {
         setError(data.message || "Something went wrong.");
       }
@@ -132,7 +181,7 @@ export default function AddDeliveryNote() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md">
+      <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md relative">
         <h2 className="text-2xl font-bold mb-4">Create Delivery Note</h2>
 
         {error && <p className="text-red-500">{error}</p>}
@@ -140,24 +189,45 @@ export default function AddDeliveryNote() {
 
         <div className="mb-4">
           <label className="block font-semibold">Note Number:</label>
-          <input
-            type="text"
-            className="w-full border p-2 rounded"
-            value={noteNumber}
-            readOnly
-          />
+          <input type="text" className="w-full border p-2 rounded" value={noteNumber} readOnly />
         </div>
 
-        <div className="mb-4">
-          <label className="block font-semibold">Recipient:</label>
+        <div className="mb-4 relative" tabIndex={0}
+          onBlur={() => setTimeout(() => setFilteredClients([]), 100)}>
+          <label className="block font-semibold">Select Client:</label>
           <input
             type="text"
             className="w-full border p-2 rounded"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="Enter recipient's name"
+            value={clientSearchTerm}
+            onChange={(e) => {
+              const value = e.target.value;
+              setClientSearchTerm(value);
+              const matches = clients.filter((client) =>
+                client.name.toLowerCase().includes(value.toLowerCase())
+              );
+              setFilteredClients(matches);
+            }}
+            placeholder="Search client..."
           />
+          {filteredClients.length > 0 && (
+            <ul className="absolute z-10 w-full bg-white border mt-1 rounded shadow max-h-60 overflow-y-auto">
+              {filteredClients.map((client) => (
+                <li
+                  key={client.id}
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                  onMouseDown={() => {
+                    setSelectedClient(client);
+                    setClientSearchTerm(client.name);
+                    setFilteredClients([]);
+                  }}
+                >
+                  {client.name}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
+
 
         <div className="mb-4">
           <label className="block font-semibold">Delivery Date:</label>
@@ -179,7 +249,7 @@ export default function AddDeliveryNote() {
             placeholder="Type item name..."
           />
           {filteredItems.length > 0 && (
-            <ul className="absolute z-10 w-full bg-white border mt-1 rounded shadow">
+            <ul className="absolute z-10 w-full bg-white border mt-1 rounded shadow max-h-48 overflow-auto">
               {filteredItems.map((item) => (
                 <li
                   key={item.id}

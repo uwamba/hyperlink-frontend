@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
-
 const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Company Name";
 const COMPANY_TIN = process.env.NEXT_PUBLIC_COMPANY_TIN || "TIN Number";
 const BANK_ACCOUNT_NAME = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "Bank Account Name";
@@ -20,7 +20,6 @@ export default function DeliveryNoteList() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedNote, setSelectedNote] = useState<any | null>(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -39,7 +38,7 @@ export default function DeliveryNoteList() {
 
   useEffect(() => {
     handleSearch(searchQuery);
-    setCurrentPage(1); // Reset to page 1 on new search
+    setCurrentPage(1);
   }, [searchQuery, deliveryNotes]);
 
   const fetchDeliveryNotes = async () => {
@@ -71,55 +70,31 @@ export default function DeliveryNoteList() {
     setFilteredNotes(results);
   };
 
-  const downloadPDF = (note: any) => {
-    if (!note || !note.items || note.items.length === 0) {
-      setError("No items available for this delivery note.");
-      return;
-    }
+  const downloadPDFHtml = async () => {
+  const input = document.getElementById("delivery-note-html");
+  if (!input) return;
 
-    const doc = new jsPDF();
+  const canvas = await html2canvas(input, {
+    scale: 2, // Higher resolution for better quality
+  });
 
-    doc.setFontSize(22).setFont("helvetica", "bold").text("DELIVERY NOTE", 20, 20);
-    doc.setFontSize(16).text(`DELIVERY NOTE # ${note.delivery_number}`, 20, 30);
-    doc.text(COMPANY_NAME, 20, 40);
-    doc.setFontSize(12).setFont("helvetica", "normal").text(`TIN: ${COMPANY_TIN}`, 20, 50);
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
 
-    doc.setFont("helvetica", "bold").text("Bill To:", 20, 65);
-    doc.setFont("helvetica", "normal").text(note.client?.name || note.recipient, 40, 65);
+  const pageWidth = pdf.internal.pageSize.getWidth();   // usually 210mm
+  const pageHeight = pdf.internal.pageSize.getHeight(); // usually 297mm
 
-    doc.setFont("helvetica", "bold").text("Ship To:", 20, 75);
-    doc.setFont("helvetica", "normal").text(note.recipient, 40, 75);
+  const margin = 10; // 10mm margins
+  const contentWidth = pageWidth - margin * 2;
+  const contentHeight = (canvas.height * contentWidth) / canvas.width;
 
-    doc.setFont("helvetica", "bold").text(`${note.delivery_date} Date:`, 20, 85);
+  const positionX = margin;
+  const positionY = margin;
 
-    let currentY = 100;
-    const startX = 20;
-    doc.setFont("helvetica", "bold");
-    doc.text("Item", startX, currentY);
-    doc.text("Quantity", startX + 90, currentY);
+  pdf.addImage(imgData, "PNG", positionX, positionY, contentWidth, contentHeight);
+  pdf.save(`delivery-note-${selectedNote?.delivery_number}.pdf`);
+};
 
-    currentY += 10;
-    doc.setFont("helvetica", "normal");
-
-    note.items.forEach((item: any) => {
-      const itemName = item.item_name || "";
-      const quantity = item.quantity || 0;
-      const splitItemName = doc.splitTextToSize(itemName, 80);
-      doc.text(splitItemName, startX, currentY);
-      doc.text(String(quantity), startX + 90, currentY);
-      currentY += 10 + (splitItemName.length - 1) * 6;
-    });
-
-    currentY += 20;
-    doc.setFont("helvetica", "bold").setFontSize(12).text("ACCOUNT:", startX, currentY);
-    doc.setFont("helvetica", "normal").text(`Bank Account Name: ${BANK_ACCOUNT_NAME}`, startX, currentY + 10);
-    doc.text(`Bank of Kigali: ${BANK_ACCOUNT_RWF} (RWF)`, startX, currentY + 20);
-    doc.text(`Bank of Kigali: ${BANK_ACCOUNT_USD} (USD)`, startX, currentY + 30);
-
-    doc.save(`delivery-note-${note.delivery_number}.pdf`);
-  };
-
-  // Pagination logic
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentNotes = filteredNotes.slice(indexOfFirst, indexOfLast);
@@ -131,7 +106,6 @@ export default function DeliveryNoteList() {
         <h2 className="text-2xl font-bold mb-4">Delivery Notes</h2>
         {error && <p className="text-red-500">{error}</p>}
 
-        {/* Search Input */}
         <input
           type="text"
           placeholder="Search by client, delivery number or recipient"
@@ -161,26 +135,18 @@ export default function DeliveryNoteList() {
                       <td className="border px-4 py-2">{note.client?.name || "N/A"}</td>
                       <td className="border px-4 py-2">{note.delivery_date}</td>
                       <td className="border px-4 py-2 space-x-2">
-                        <button onClick={() => setSelectedNote(note)} className="text-blue-500">
-                          View
-                        </button>
-                        <button onClick={() => downloadPDF(note)} className="text-green-500">
-                          PDF
-                        </button>
+                        <button onClick={() => setSelectedNote(note)} className="text-blue-500">View</button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="text-center py-2">
-                      No matching delivery notes found.
-                    </td>
+                    <td colSpan={4} className="text-center py-2">No matching delivery notes found.</td>
                   </tr>
                 )}
               </tbody>
             </table>
 
-            {/* Pagination Controls */}
             <div className="mt-4 flex justify-between items-center">
               <p className="text-sm">
                 Showing {indexOfFirst + 1}-{Math.min(indexOfLast, filteredNotes.length)} of {filteredNotes.length}
@@ -207,36 +173,91 @@ export default function DeliveryNoteList() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* HTML Modal for Selected Note */}
       {selectedNote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white w-full max-w-2xl p-6 rounded-lg shadow-lg relative">
-            <button
-              onClick={() => setSelectedNote(null)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold"
-            >
-              &times;
-            </button>
-            <h3 className="text-xl font-bold mb-4">Delivery Note #{selectedNote.delivery_number}</h3>
-            <p><strong>Client:</strong> {selectedNote.client?.name || selectedNote.recipient}</p>
-            <p><strong>Recipient:</strong> {selectedNote.recipient}</p>
-            <p><strong>Date:</strong> {selectedNote.delivery_date}</p>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white w-full max-w-3xl p-6 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]">
+      {/* Close Button */}
+      <button
+        onClick={() => setSelectedNote(null)}
+        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold"
+      >
+        &times;
+      </button>
 
-            <h4 className="mt-4 font-semibold">Items:</h4>
-            <ul className="list-disc pl-6 space-y-1 mt-2">
-              {selectedNote.items && selectedNote.items.length > 0 ? (
-                selectedNote.items.map((item: any, index: number) => (
-                  <li key={index}>
-                    {item.item_name} — Quantity: {item.quantity}
-                  </li>
-                ))
-              ) : (
-                <li>No items found for this note.</li>
-              )}
-            </ul>
+      {/* Printable Content */}
+      <div id="delivery-note-html" className="text-sm text-gray-800 leading-relaxed">
+        {/* Header Row: Logo Left, Title + Number Right */}
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <img src="/images/logo.png" alt="Company Logo" className="h-16 object-contain" />
+          </div>
+          <div className="text-right">
+            <h2 className="text-2xl font-bold">DELIVERY NOTE</h2>
+            <p className="text-gray-700">Delivery Note #: <span className="font-semibold">{selectedNote.delivery_number}</span></p>
+            <p className="text-gray-700">Date: {selectedNote.delivery_date}</p>
           </div>
         </div>
-      )}
+
+        {/* Company Info */}
+        <div className="mb-4">
+          <strong>Company:</strong> {COMPANY_NAME}<br />
+          <strong>TIN:</strong> {COMPANY_TIN}
+        </div>
+
+        {/* Bill To and Ship To in a Row */}
+        <div className="flex justify-between mb-4">
+          <div className="w-1/2 pr-2">
+            <strong>Bill To:</strong><br />
+            {selectedNote.client?.name || selectedNote.recipient}
+          </div>
+          <div className="w-1/2 pl-2">
+            <strong>Ship To:</strong><br />
+            {selectedNote.recipient}
+          </div>
+        </div>
+
+        {/* Items Table */}
+        <table className="w-full border border-collapse text-sm">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border px-2 py-1 text-left">Item</th>
+              <th className="border px-2 py-1 text-left">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedNote.items?.map((item: any, idx: number) => (
+              <tr key={idx}>
+                <td className="border px-2 py-1">{item.item_name}</td>
+                <td className="border px-2 py-1">{item.quantity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Bank Account Info */}
+        <div className="mt-6">
+          <strong>ACCOUNT:</strong><br />
+          Bank Account Name: {BANK_ACCOUNT_NAME}<br />
+          Bank of Kigali (RWF): {BANK_ACCOUNT_RWF}<br />
+          Bank of Kigali (USD): {BANK_ACCOUNT_USD}
+        </div>
+      </div>
+
+      {/* Download PDF Button */}
+      <div className="mt-4 text-right">
+        <button
+          onClick={downloadPDFHtml}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        >
+          Download PDF
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+      
     </DashboardLayout>
   );
 }

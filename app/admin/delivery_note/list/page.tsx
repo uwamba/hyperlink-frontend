@@ -71,29 +71,29 @@ export default function DeliveryNoteList() {
   };
 
   const downloadPDFHtml = async () => {
-  const input = document.getElementById("delivery-note-html");
-  if (!input) return;
+    const input = document.getElementById("delivery-note-html");
+    if (!input) return;
 
-  const canvas = await html2canvas(input, {
-    scale: 2, // Higher resolution for better quality
-  });
+    const canvas = await html2canvas(input, {
+      scale: 2, // Higher resolution for better quality
+    });
 
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "mm", "a4");
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
 
-  const pageWidth = pdf.internal.pageSize.getWidth();   // usually 210mm
-  const pageHeight = pdf.internal.pageSize.getHeight(); // usually 297mm
+    const pageWidth = pdf.internal.pageSize.getWidth();   // usually 210mm
+    const pageHeight = pdf.internal.pageSize.getHeight(); // usually 297mm
 
-  const margin = 10; // 10mm margins
-  const contentWidth = pageWidth - margin * 2;
-  const contentHeight = (canvas.height * contentWidth) / canvas.width;
+    const margin = 10; // 10mm margins
+    const contentWidth = pageWidth - margin * 2;
+    const contentHeight = (canvas.height * contentWidth) / canvas.width;
 
-  const positionX = margin;
-  const positionY = margin;
+    const positionX = margin;
+    const positionY = margin;
 
-  pdf.addImage(imgData, "PNG", positionX, positionY, contentWidth, contentHeight);
-  pdf.save(`delivery-note-${selectedNote?.delivery_number}.pdf`);
-};
+    pdf.addImage(imgData, "PNG", positionX, positionY, contentWidth, contentHeight);
+    pdf.save(`delivery-note-${selectedNote?.delivery_number}.pdf`);
+  };
 
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
@@ -175,89 +175,131 @@ export default function DeliveryNoteList() {
 
       {/* HTML Modal for Selected Note */}
       {selectedNote && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div className="bg-white w-full max-w-3xl p-6 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]">
-      {/* Close Button */}
-      <button
-        onClick={() => setSelectedNote(null)}
-        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold"
-      >
-        &times;
-      </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white w-full max-w-3xl p-6 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]">
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedNote(null)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold"
+            >
+              &times;
+            </button>
 
-      {/* Printable Content */}
-      <div id="delivery-note-html" className="text-sm text-gray-800 leading-relaxed">
-        {/* Header Row: Logo Left, Title + Number Right */}
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <img src="/images/logo.png" alt="Company Logo" className="h-16 object-contain" />
-          </div>
-          <div className="text-right">
-            <h2 className="text-2xl font-bold">DELIVERY NOTE</h2>
-            <p className="text-gray-700">Delivery Note #: <span className="font-semibold">{selectedNote.delivery_number}</span></p>
-            <p className="text-gray-700">Date: {selectedNote.delivery_date}</p>
+            {/* Printable Content */}
+            <div id="delivery-note-html" className="text-sm text-gray-800 leading-relaxed">
+              {/* Header Row: Logo Left, Title + Number Right */}
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                 <img src="/images/logo.png" alt="Company Logo" className="h-32 object-contain" />
+
+                </div>
+                <div className="text-right">
+                  <h2 className="text-1xl font-bold">DELIVERY NOTE</h2>
+                  <p className="text-gray-700">Delivery Note #: <span className="font-semibold">{selectedNote.delivery_number}</span></p>
+                  <p className="text-gray-700">Date: {selectedNote.delivery_date}</p>
+                </div>
+              </div>
+
+              {/* Company Info */}
+              <div className="mb-4">
+                <strong>Company:</strong> {COMPANY_NAME}<br />
+                <strong>TIN:</strong> {COMPANY_TIN}
+              </div>
+
+              {/* Bill To and Ship To in a Row */}
+              <div className="flex justify-between mb-4">
+                <div className="w-1/2 pr-2">
+                  <strong>Bill To:</strong><br />
+                  {selectedNote.client?.name || selectedNote.recipient}
+                </div>
+                <div className="w-1/2 pl-2">
+                  <strong>Ship To:</strong><br />
+                  {selectedNote.recipient}
+                </div>
+              </div>
+
+              <div className="text-center mb-2">
+                <p className="text-sm font-medium mb-2">Delivery</p>
+
+                <div className="w-full h-1 bg-blue-500 mb-2"></div>
+
+                <p className="text-sm font-medium mt-2">Note</p>
+              </div>
+
+              <div className="my-12"></div>
+
+
+
+
+
+
+              {/* Items Table */}
+              <table className="w-full border border-collapse text-sm">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="border px-2 py-1 text-left">Item</th>
+                    <th className="border px-2 py-1 text-left">Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedNote.items?.map((item: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="border px-2 py-1">{item.item_name}</td>
+                      <td className="border px-2 py-1">{item.quantity}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="my-20"></div>
+
+              {/* Bank Account Info */}
+              {/* Ownership and Responsibility Clause */}
+              <div className="mb-6">
+                <h3 className="font-bold mb-1">Ownership and Responsibility Clause</h3>
+                <p>
+                  Unless otherwise specified in the “Status” column above (such as items to be paid for or
+                  those explicitly stated to become client property), all delivered items remain the property
+                  of Hyperlink Networks Ltd.
+                </p>
+                <p className="mt-2">
+                  The client is required to keep and maintain all items in good condition for the duration of
+                  the contract. In the event of damage caused by natural disasters, items will be replaced at
+                  no additional cost. However, the client is liable for any loss or damage resulting from
+                  negligence, misuse, or failure to adequately secure the items.
+                </p>
+              </div>
+
+              {/* Acknowledgement Section */}
+              <div className="grid grid-cols-2 gap-8 mt-8">
+                <div>
+                  <p className="font-bold underline mb-1">Delivered By (Supplier):</p>
+                  <p>Name: _____________________</p>
+                  <p>Signature & Date: _________________________</p>
+                </div>
+                <div>
+                  <p className="font-bold underline mb-1">Received By (Client):</p>
+                  <p>Name: _____________________</p>
+                  <p>Signature & Date: _________________________</p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Download PDF Button */}
+            <div className="mt-4 text-right">
+              <button
+                onClick={downloadPDFHtml}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+              >
+                Download PDF
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Company Info */}
-        <div className="mb-4">
-          <strong>Company:</strong> {COMPANY_NAME}<br />
-          <strong>TIN:</strong> {COMPANY_TIN}
-        </div>
 
-        {/* Bill To and Ship To in a Row */}
-        <div className="flex justify-between mb-4">
-          <div className="w-1/2 pr-2">
-            <strong>Bill To:</strong><br />
-            {selectedNote.client?.name || selectedNote.recipient}
-          </div>
-          <div className="w-1/2 pl-2">
-            <strong>Ship To:</strong><br />
-            {selectedNote.recipient}
-          </div>
-        </div>
-
-        {/* Items Table */}
-        <table className="w-full border border-collapse text-sm">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border px-2 py-1 text-left">Item</th>
-              <th className="border px-2 py-1 text-left">Quantity</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedNote.items?.map((item: any, idx: number) => (
-              <tr key={idx}>
-                <td className="border px-2 py-1">{item.item_name}</td>
-                <td className="border px-2 py-1">{item.quantity}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Bank Account Info */}
-        <div className="mt-6">
-          <strong>ACCOUNT:</strong><br />
-          Bank Account Name: {BANK_ACCOUNT_NAME}<br />
-          Bank of Kigali (RWF): {BANK_ACCOUNT_RWF}<br />
-          Bank of Kigali (USD): {BANK_ACCOUNT_USD}
-        </div>
-      </div>
-
-      {/* Download PDF Button */}
-      <div className="mt-4 text-right">
-        <button
-          onClick={downloadPDFHtml}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-          Download PDF
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-      
     </DashboardLayout>
   );
 }

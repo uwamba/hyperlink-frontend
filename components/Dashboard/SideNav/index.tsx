@@ -97,6 +97,11 @@ const SideNav = () => {
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Stock</span>
                 </Link>
               </li>
+               <li>
+                <Link href="/admin/report/performance">
+                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Users Performance</span>
+                </Link>
+              </li>
             </ul>
           </li>
         )}

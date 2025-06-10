@@ -269,7 +269,55 @@ export default function UnpaidInvoices() {
       </div>
     )}
   </div>
+{/* Payment Modal */}
+        {modalOpen && selectedInvoice && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+              <h2 className="text-lg font-bold mb-4">Pay Invoice #{selectedInvoice.invoice_no}</h2>
 
+              <label className="block mb-2">Amount Paid</label>
+              <input
+                type="number"
+                name="amount_paid"
+                value={paymentData.amount_paid}
+                onChange={handlePaymentChange}
+                className="w-full p-2 border rounded mb-4"
+              />
+
+              <label className="block mb-2">Payment Method</label>
+              <select
+                name="payment_method"
+                value={paymentData.payment_method}
+                onChange={handlePaymentChange}
+                className="w-full p-2 border rounded mb-4"
+              >
+                <option value="MPESA">MOMO</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="card">CARD</option>
+                <option value="cash">CASH</option>
+              </select>
+
+              <label className="block mb-2">Transaction ID</label>
+              <input
+                type="text"
+                name="transaction_id"
+                value={paymentData.transaction_id}
+                onChange={handlePaymentChange}
+                className="w-full p-2 border rounded mb-4"
+                placeholder="Optional"
+              />
+
+              <div className="flex justify-end gap-2">
+                <button className="bg-gray-400 px-4 py-2 rounded" onClick={() => setModalOpen(false)}>
+                  Cancel
+                </button>
+                <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={submitPayment}>
+                  Submit Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
   {/* (Payment modal and delete confirmation can follow as before) */}
 </DashboardLayout>
 

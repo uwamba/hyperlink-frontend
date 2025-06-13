@@ -65,7 +65,7 @@ const SideNav = () => {
         </li>
      )}
         {/* Conditionally render Clients */}
-        {(userRole === 'super_user' || userRole === 'sales') && matchesSearch("Clients") && (
+        {(userRole === 'super_user' || userRole === 'sales' ) && matchesSearch("Clients") && (
           <li>
             <button
               onClick={() => setIsReportsOpen(!isReportsOpen)}
@@ -106,7 +106,7 @@ const SideNav = () => {
           </li>
         )}
 
-         {(userRole === 'super_user') && matchesSearch("Clients") && (
+         {(userRole === 'super_user' || userRole==='manager') && matchesSearch("Clients") && (
           <li>
             <button
               onClick={() => setIsClientsOpen(!isClientsOpen)}
@@ -133,7 +133,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Plans */}
-        {(userRole === 'super_user') && (
+        {(userRole === 'super_user' || userRole==='manager') && (
           <li>
             <button
               onClick={() => setIsPlansOpen(!isPlansOpen)}
@@ -213,7 +213,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Invoices */}
-        {(userRole === 'super_user' || userRole === 'sales') && (
+        {(userRole === 'super_user' || userRole === 'sales' || userRole==='manager') && (
           <li>
             <button
               onClick={() => setIsInvoicesOpen(!isInvoicesOpen)}

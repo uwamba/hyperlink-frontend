@@ -153,7 +153,7 @@ export default function ExpenseList() {
                   <tr key={expense.id} className="border hover:bg-gray-100">
                     <td className="border px-4 py-2">{expense.description}</td>
                     <td className="border px-4 py-2">
-                      Ksh {parseFloat(expense.amount.toString()).toLocaleString()}
+                      FRW {parseFloat(expense.amount.toString()).toLocaleString()}
                     </td>
                     <td className="border px-4 py-2">{expense.category || "-"}</td>
                     <td className="border px-4 py-2">

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 interface Expense {
   id: number;
@@ -32,13 +33,18 @@ export default function ExpenseList() {
     category: "",
   });
 
+  // 🧭 Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 20; // Adjust as needed
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     setAuthToken(token);
-    fetchExpenses(token);
-  }, []);
+    fetchExpenses(token, currentPage);
+  }, [currentPage]);
 
-  const fetchExpenses = async (token: string | null) => {
+  const fetchExpenses = async (token: string | null, page = 1) => {
     if (!token) {
       setError("Authentication required. Please log in.");
       setLoading(false);
@@ -46,12 +52,27 @@ export default function ExpenseList() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/expenses`, {
+      // 👇 Adjust this if your backend supports pagination
+      const response = await fetch(`${API_URL}/expenses?page=${page}&limit=${itemsPerPage}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const json = await response.json();
+
       if (response.ok) {
-        setExpenses(json.data || []);
+        // If backend returns paginated data:
+        // Example format: { data: [...], meta: { current_page, last_page } }
+        if (json.meta) {
+          setExpenses(json.data || []);
+          setCurrentPage(json.meta.current_page || 1);
+          setTotalPages(json.meta.last_page || 1);
+        } else {
+          // Otherwise, fallback to client-side pagination
+          const all = json.data || [];
+          setTotalPages(Math.ceil(all.length / itemsPerPage));
+          const start = (page - 1) * itemsPerPage;
+          setExpenses(all.slice(start, start + itemsPerPage));
+        }
       } else {
         throw new Error(json.message || "Failed to load expenses");
       }
@@ -136,57 +157,82 @@ export default function ExpenseList() {
         {loading ? (
           <p>Loading...</p>
         ) : (
-          <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th className="border px-4 py-2">Description</th>
-                <th className="border px-4 py-2">Amount</th>
-                <th className="border px-4 py-2">Category</th>
-                <th className="border px-4 py-2">Expense Date</th>
-                <th className="border px-4 py-2">Created At</th>
-                <th className="border px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {expenses.length > 0 ? (
-                expenses.map((expense) => (
-                  <tr key={expense.id} className="border hover:bg-gray-100">
-                    <td className="border px-4 py-2">{expense.description}</td>
-                    <td className="border px-4 py-2">
-                      FRW {parseFloat(expense.amount.toString()).toLocaleString()}
-                    </td>
-                    <td className="border px-4 py-2">{expense.category || "-"}</td>
-                    <td className="border px-4 py-2">
-                      {new Date(expense.expense_date).toLocaleDateString()}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {new Date(expense.created_at).toLocaleString()}
-                    </td>
-                    <td className="border px-4 py-2 flex gap-2">
-                      <button
-                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                        onClick={() => openEditModal(expense)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                        onClick={() => confirmDeleteExpense(expense.id)}
-                      >
-                        Delete
-                      </button>
+          <>
+            <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+              <thead className="bg-gray-800 text-white">
+                <tr>
+                  <th className="border px-4 py-2">Description</th>
+                  <th className="border px-4 py-2">Amount</th>
+                  <th className="border px-4 py-2">Category</th>
+                  <th className="border px-4 py-2">Expense Date</th>
+                  <th className="border px-4 py-2">Created At</th>
+                  <th className="border px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {expenses.length > 0 ? (
+                  expenses.map((expense) => (
+                    <tr key={expense.id} className="border hover:bg-gray-100">
+                      <td className="border px-4 py-2">{expense.description}</td>
+                      <td className="border px-4 py-2">
+                        FRW {parseFloat(expense.amount.toString()).toLocaleString()}
+                      </td>
+                      <td className="border px-4 py-2">{expense.category || "-"}</td>
+                      <td className="border px-4 py-2">
+                        {new Date(expense.expense_date).toLocaleDateString()}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {new Date(expense.created_at).toLocaleString()}
+                      </td>
+                      <td className="border px-4 py-2 flex gap-2">
+                        <button
+                          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                          onClick={() => openEditModal(expense)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                          onClick={() => confirmDeleteExpense(expense.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-4">
+                      No expenses found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-4">
-                    No expenses found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+
+            {/* 🧭 Pagination controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center mt-6 gap-4">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <span className="text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

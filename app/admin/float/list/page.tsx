@@ -15,6 +15,10 @@ export default function FloatList() {
   const [editedAmount, setEditedAmount] = useState("");
   const [editedReason, setEditedReason] = useState("");
 
+  // NEW: pagination states
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const userData = JSON.parse(localStorage.getItem("user") || "null");
@@ -150,6 +154,13 @@ export default function FloatList() {
     }
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(floats.length / itemsPerPage);
+  const displayedFloats = floats.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const userBalance = floats[0]?.user?.balance ?? 0;
 
   return (
@@ -157,13 +168,33 @@ export default function FloatList() {
       <div className="container mx-auto p-6">
         <h2 className="text-2xl font-bold mb-4">Float Requests</h2>
 
-        <div className="mb-4">
+        <div className="mb-4 flex justify-between items-center">
           <p className="text-lg font-medium text-gray-700">
             Current Balance:{" "}
             <span className="font-bold text-green-600">
               RWF {parseFloat(userBalance).toLocaleString()}
             </span>
           </p>
+
+          {/* Items per page selector */}
+          <div>
+            <label className="mr-2 font-medium text-gray-700">Show:</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1); // Reset to first page when changing limit
+              }}
+              className="border rounded px-2 py-1"
+            >
+              {[5, 10, 20, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <span className="ml-1 text-gray-700">items</span>
+          </div>
         </div>
 
         {error && <p className="text-red-500">{error}</p>}
@@ -171,77 +202,102 @@ export default function FloatList() {
         {loading ? (
           <p>Loading...</p>
         ) : (
-          <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th className="border px-4 py-2">Float ID</th>
-                <th className="border px-4 py-2">Requested By</th>
-                <th className="border px-4 py-2">Amount</th>
-                <th className="border px-4 py-2">Reason</th>
-                <th className="border px-4 py-2">Date Requested</th>
-                <th className="border px-4 py-2">Status</th>
-                {userRole === "super_user" && (
-                  <th className="border px-4 py-2">Actions</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {Array.isArray(floats) && floats.length > 0 ? (
-                floats.map((float) => (
-                  <tr key={float.id} className="border hover:bg-gray-100">
-                    <td className="border px-4 py-2">{float.id}</td>
-                    <td className="border px-4 py-2">{float.user?.name || "N/A"}</td>
-                    <td className="border px-4 py-2">
-                      RWF {parseFloat(float.amount).toLocaleString()}
-                    </td>
-                    <td className="border px-4 py-2">{float.reason}</td>
-                    <td className="border px-4 py-2">
-                      {new Date(float.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="border px-4 py-2 capitalize">{float.status}</td>
-                    {userRole === "super_user" && (
-                      <td className="border px-4 py-2 space-x-2">
-                        {float.status === "pending" && (
-                          <>
-                            <button
-                              onClick={() => handleStatusChange(float.id, "approved")}
-                              className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleStatusChange(float.id, "rejected")}
-                              className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        <button
-                          onClick={() => handleEdit(float)}
-                          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(float.id)}
-                          className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))
-              ) : (
+          <>
+            <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+              <thead className="bg-gray-800 text-white">
                 <tr>
-                  <td colSpan={7} className="text-center py-4">
-                    No float requests found
-                  </td>
+                  <th className="border px-4 py-2">Float ID</th>
+                  <th className="border px-4 py-2">Requested By</th>
+                  <th className="border px-4 py-2">Amount</th>
+                  <th className="border px-4 py-2">Reason</th>
+                  <th className="border px-4 py-2">Date Requested</th>
+                  <th className="border px-4 py-2">Status</th>
+                  {userRole === "super_user" && (
+                    <th className="border px-4 py-2">Actions</th>
+                  )}
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white">
+                {displayedFloats.length > 0 ? (
+                  displayedFloats.map((float) => (
+                    <tr key={float.id} className="border hover:bg-gray-100">
+                      <td className="border px-4 py-2">{float.id}</td>
+                      <td className="border px-4 py-2">{float.user?.name || "N/A"}</td>
+                      <td className="border px-4 py-2">
+                        RWF {parseFloat(float.amount).toLocaleString()}
+                      </td>
+                      <td className="border px-4 py-2">{float.reason}</td>
+                      <td className="border px-4 py-2">
+                        {new Date(float.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="border px-4 py-2 capitalize">{float.status}</td>
+                      {userRole === "super_user" && (
+                        <td className="border px-4 py-2 space-x-2">
+                          {float.status === "pending" && (
+                            <>
+                              <button
+                                onClick={() => handleStatusChange(float.id, "approved")}
+                                className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleStatusChange(float.id, "rejected")}
+                                className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={() => handleEdit(float)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(float.id)}
+                            className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4">
+                      No float requests found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Pagination controls */}
+            <div className="flex justify-between items-center mt-4">
+              <p className="text-gray-600">
+                Page {currentPage} of {totalPages || 1}
+              </p>
+              <div className="space-x-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  className="px-3 py-1 border rounded disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  className="px-3 py-1 border rounded disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Edit Form */}

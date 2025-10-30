@@ -165,7 +165,7 @@ const SideNav = () => {
               onClick={() => setIsFloatOpen(!isFloatOpen)}
               className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
             >
-              Peticash Floats
+              Pettycash Floats
               <span className={`inline-block transition-transform duration-200 ${isFloatOpen ? "rotate-180" : "rotate-0"}`}>
                 <ChevronDownIcon className="w-5 h-5 inline-block" />
               </span>

@@ -1,23 +1,30 @@
 import { Brand } from "@/types/brand";
-import Image from "next/image";
 import brandsData from "./brandsData";
 
 const Brands = () => {
   return (
-    <section className="pt-16">
-      <div className="container">
-        <div className="-mx-4 flex flex-wrap">
-          <div className="w-full px-4">
-            <div
-              className="wow fadeInUp bg-gray-light dark:bg-gray-dark flex flex-wrap items-center justify-center rounded-sm px-8 py-8 sm:px-10 md:px-[50px] md:py-[40px] xl:p-[50px] 2xl:px-[70px] 2xl:py-[60px]"
-              data-wow-delay=".1s"
-            >
-              {brandsData.map((brand) => (
-                <SingleBrand key={brand.id} brand={brand} />
-              ))}
-            </div>
+    <section className="py-20 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+      <div className="container mx-auto px-6">
+
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-gray-400 mb-3">
+            <span className="w-8 h-px bg-gray-300 inline-block" />
+            Trusted By
+            <span className="w-8 h-px bg-gray-300 inline-block" />
           </div>
+          <h3 className="text-2xl font-black text-gray-800 dark:text-white">
+            Our Clients &amp; Partners
+          </h3>
         </div>
+
+        {/* Brands */}
+        <div className="flex flex-wrap items-center justify-center gap-6 px-8">
+          {brandsData.map((brand) => (
+            <SingleBrand key={brand.id} brand={brand} />
+          ))}
+        </div>
+
       </div>
     </section>
   );
@@ -27,21 +34,11 @@ export default Brands;
 
 const SingleBrand = ({ brand }: { brand: Brand }) => {
   const { href, image, name } = brand;
-
   return (
-    <div className="mx-3 flex w-full max-w-[120px] items-center justify-center py-[15px] sm:mx-4 lg:max-w-[120px] xl:mx-6 xl:max-w-[120px] 2xl:mx-8 2xl:max-w-[120px]">
+    <div className="mx-3 flex w-full max-w-[120px] items-center justify-center py-[15px] sm:mx-4 xl:mx-6 2xl:mx-8">
       <h4 className="sr-only">OUR CLIENTS</h4>
-      <a
-        href={href}
-        target="_blank"
-        rel="nofollow noreferrer"
-        className="relative h-10 w-full opacity-100 transition hover:opacity-100 hover:grayscale-0 dark:opacity-60 dark:hover:opacity-100"
-      >
-        <img
-          src={image}
-          alt={name}
-          className="w-[100px] h-[100px] object-contain mx-auto" // Ensure uniform size for all logos
-        />
+      <a href={href} target="_blank" rel="nofollow noreferrer" className="relative h-10 w-full opacity-50 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-300">
+        <img src={image} alt={name} className="w-[100px] h-[100px] object-contain mx-auto hover:scale-110 transition-transform duration-300" />
       </a>
     </div>
   );

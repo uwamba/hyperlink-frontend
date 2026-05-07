@@ -6,6 +6,7 @@ import Hero from "@/components/Hero";
 import WebsiteLayout from '@/components/layouts/WebsiteLayout';
 import { Metadata } from "next";
 import AboutPage from "./about/page";
+import Chatbot from "@/components/Chatbot";
 
 export const metadata: Metadata = {
   title: "Hyperlink Network",
@@ -21,6 +22,7 @@ export default function Home() {
       <Features />     
       <Contact />
       <Brands />
+      <Chatbot /> 
       </WebsiteLayout>
   );
 }

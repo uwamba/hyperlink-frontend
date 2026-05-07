@@ -55,17 +55,17 @@ const SideNav = () => {
             <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Dashboard</span>
           </Link>
         </li>
-       
+
         {/* Conditionally render setings */}
         {(userRole === 'super_user') && (
-        <li>
-          <Link href="/admin/settings">
-            <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Settings</span>
-          </Link>
-        </li>
-     )}
+          <li>
+            <Link href="/admin/settings">
+              <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Settings</span>
+            </Link>
+          </li>
+        )}
         {/* Conditionally render Clients */}
-        {(userRole === 'super_user' || userRole === 'sales' ) && matchesSearch("Clients") && (
+        {(userRole === 'super_user' || userRole === 'sales') && matchesSearch("Clients") && (
           <li>
             <button
               onClick={() => setIsReportsOpen(!isReportsOpen)}
@@ -97,7 +97,7 @@ const SideNav = () => {
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Stock</span>
                 </Link>
               </li>
-               <li>
+              <li>
                 <Link href="/admin/report/performance">
                   <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Users Performance</span>
                 </Link>
@@ -106,7 +106,7 @@ const SideNav = () => {
           </li>
         )}
 
-         {(userRole === 'super_user' || userRole==='manager') && matchesSearch("Clients") && (
+        {(userRole === 'super_user' || userRole === 'manager') && matchesSearch("Clients") && (
           <li>
             <button
               onClick={() => setIsClientsOpen(!isClientsOpen)}
@@ -132,8 +132,20 @@ const SideNav = () => {
           </li>
         )}
 
+        {/* Chat Sessions */}
+        {(userRole === 'super_user' || userRole === 'technician' || userRole === 'manager') && (
+          <li>
+            <Link href="/admin/chat">
+              <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">
+                💬 Chat Sessions
+                {/* You can add a badge here later for waiting count */}
+              </span>
+            </Link>
+          </li>
+        )}
+
         {/* Conditionally render Plans */}
-        {(userRole === 'super_user' || userRole==='manager') && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsPlansOpen(!isPlansOpen)}
@@ -159,7 +171,7 @@ const SideNav = () => {
           </li>
         )}
         {/* Conditionally render Floats */}
-        {(userRole === 'super_user' || userRole === 'manager')  && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsFloatOpen(!isFloatOpen)}
@@ -186,7 +198,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Subscriptions */}
-        {(userRole === 'super_user' || userRole === 'manager' || userRole==='sales' ) && (
+        {(userRole === 'super_user' || userRole === 'manager' || userRole === 'sales') && (
           <li>
             <button
               onClick={() => setIsSubsOpen(!isSubsOpen)}
@@ -213,7 +225,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render Invoices */}
-        {(userRole === 'super_user' || userRole === 'sales' || userRole==='manager') && (
+        {(userRole === 'super_user' || userRole === 'sales' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsInvoicesOpen(!isInvoicesOpen)}
@@ -303,22 +315,22 @@ const SideNav = () => {
                 </div>
               </li>
               <li>
-                      <Link href="/admin/stock/stock_out">
-                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Delivered Stock</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/admin/stock/stock_in">
-                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Stock</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/admin/stock/new_stock">
-                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">New Stock</span>
-                      </Link>
-                    </li>
+                <Link href="/admin/stock/stock_out">
+                  <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Delivered Stock</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/stock/stock_in">
+                  <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Stock</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/stock/new_stock">
+                  <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">New Stock</span>
+                </Link>
+              </li>
 
-             
+
 
             </ul>
           </li>
@@ -484,7 +496,7 @@ const SideNav = () => {
           </li>
         )}
         {/* Conditionally render Asset Management */}
-        {(userRole === 'super_user' || userRole==='manager') && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsPurchasesOpen(!isPurchasesOpen)}
@@ -511,7 +523,7 @@ const SideNav = () => {
         )}
 
         {/* Conditionally render deluvery notes Management */}
-        {(userRole === 'super_user' || userRole==='manager') && (
+        {(userRole === 'super_user' || userRole === 'manager') && (
           <li>
             <button
               onClick={() => setIsDeliveryNotesOpen(!isDeliveryNotesOpen)}

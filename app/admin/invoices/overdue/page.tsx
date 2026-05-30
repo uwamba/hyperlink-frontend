@@ -1,53 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
+import PaymentModal from "@/components/PaymentModal";
+import ProofViewerModal from "@/components/ProofViewerModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 export default function OverdueInvoices() {
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [authToken, setAuthToken] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [invoices, setInvoices]             = useState<any[]>([]);
+  const [authToken, setAuthToken]           = useState<string | null>(null);
+  const [error, setError]                   = useState<string | null>(null);
+  const [loading, setLoading]               = useState(true);
+  const [modalOpen, setModalOpen]           = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
-  const [paymentData, setPaymentData] = useState({
-    amount_paid: "",
-    payment_method: "MPESA",
-    transaction_id: "",
-  });
+  const [proofModalOpen, setProofModalOpen]   = useState(false);
+  const [proofInvoice, setProofInvoice]       = useState<any | null>(null);
 
-  const handleGenerateInvoice = async (subscriptionId) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setError("Authentication required. Please log in.");
-    }
-    setAuthToken(token);
+  // ── Generate invoices state ───────────────────────────────────────────────
+  const [generating, setGenerating]         = useState(false);
+  const [generateResult, setGenerateResult] = useState<{
+    created: number; skipped: number; total: number; errors: string[];
+  } | null>(null);
+
+  const getToken = () => localStorage.getItem("authToken") || "";
+
+  // ── Generate invoices for all active subscriptions ────────────────────────
+  const generateInvoices = useCallback(async (silent = false) => {
+    const token = getToken();
+    if (!token) return;
+    if (!silent) setGenerating(true);
     try {
-      const response = await fetch(`${API_URL}/download-invoice/${subscriptionId}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+      const res = await fetch(`${API_URL}/invoices/generate`, {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `invoice_${subscriptionId}.pdf`;
-        link.click();
-      } else {
-        alert('Failed to generate invoice');
+      const data = await res.json();
+      if (res.ok) {
+        setGenerateResult(data);
+        // Auto-hide result after 8 seconds
+        setTimeout(() => setGenerateResult(null), 8000);
       }
-    } catch (error) {
-      console.error('Error generating invoice:', error);
-      alert('An error occurred while generating the invoice');
+    } catch {
+      // Silent fail on auto-generate — don't block page load
+    } finally {
+      if (!silent) setGenerating(false);
     }
-  };
+  }, []);
 
+  // ── Auth + initial load ───────────────────────────────────────────────────
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -59,19 +60,20 @@ export default function OverdueInvoices() {
 
   useEffect(() => {
     if (authToken) {
-      fetchInvoices();
+      // Auto-generate silently on page open, then fetch list
+      generateInvoices(true).then(() => fetchInvoices());
     }
   }, [authToken]);
 
+  // ── Fetch overdue invoices ────────────────────────────────────────────────
   const fetchInvoices = async () => {
-    if (!authToken) return;
-
+    const token = getToken();
+    if (!token) return;
     try {
       const response = await fetch(`${API_URL}/invoices/overdue`, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const responseData = await response.json();
-
       if (response.ok && Array.isArray(responseData.data)) {
         setInvoices(responseData.data);
       } else {
@@ -84,92 +86,102 @@ export default function OverdueInvoices() {
     }
   };
 
-  const openPaymentModal = (invoice: any) => {
-    setSelectedInvoice(invoice);
-    setPaymentData({
-      amount_paid: invoice.amount, 
-      payment_method: "MPESA",
-      transaction_id: "",
-    });
-    setModalOpen(true);
+  // ── Manual generate + refresh ─────────────────────────────────────────────
+  const handleManualGenerate = async () => {
+    if (!confirm("Generate invoices for all active subscriptions now?")) return;
+    setGenerating(true);
+    await generateInvoices(false);
+    await fetchInvoices();
   };
 
-  const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setPaymentData({ ...paymentData, [e.target.name]: e.target.value });
-  };
-
-  const submitPayment = async () => {
-    if (!authToken || !selectedInvoice) return;
-
-    const paymentRequest = {
-      client_id: selectedInvoice.client_id,
-      invoice_id: selectedInvoice.id,
-      amount_paid: parseFloat(paymentData.amount_paid),
-      payment_method: paymentData.payment_method,
-      transaction_id: paymentData.transaction_id || `TXN-${Date.now()}`,
-    };
-
+  // ── Download invoice PDF ──────────────────────────────────────────────────
+  const handleGenerateInvoice = async (invoiceId: string) => {
+    const token = getToken();
     try {
-      const response = await fetch(`${API_URL}/payments`, {
+      const response = await fetch(`${API_URL}/download-invoice/${invoiceId}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(paymentRequest),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
-
-      const responseData = await response.json();
-
       if (response.ok) {
-        setInvoices((prevInvoices) =>
-          prevInvoices.map((inv) =>
-            inv.id === selectedInvoice.id
-              ? { ...inv, status: parseFloat(paymentData.amount_paid) >= selectedInvoice.amount ? "paid" : "partial" }
-              : inv
-          )
-        );
-        setModalOpen(false);
+        const blob = await response.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `invoice_${invoiceId}.pdf`;
+        link.click();
       } else {
-        throw new Error(responseData.message || "Payment failed.");
+        alert("Failed to generate invoice");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred during payment.");
+    } catch {
+      alert("An error occurred while generating the invoice");
     }
   };
 
+  // ── Payment modal ─────────────────────────────────────────────────────────
+  const openPaymentModal = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setModalOpen(true);
+  };
+
+  // ── Delete invoice ────────────────────────────────────────────────────────
   const handleDeleteInvoice = async (invoiceId: string) => {
-    if (!authToken) return;
-
-    const confirmDelete = window.confirm("Are you sure you want to delete this invoice?");
-    if (!confirmDelete) return;
-
+    if (!authToken || !confirm("Are you sure you want to delete this invoice?")) return;
     try {
       const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
-
       if (response.ok) {
-        setInvoices((prevInvoices) =>
-          prevInvoices.filter((invoice) => invoice.id !== invoiceId)
-        );
-        alert("Invoice deleted successfully.");
+        setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
       } else {
         throw new Error("Failed to delete invoice.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred while deleting the invoice.");
+      setError(err instanceof Error ? err.message : "An error occurred while deleting.");
     }
   };
 
   return (
     <DashboardLayout>
       <div className="container mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-4">Overdue Invoices</h2>
-        {error && <p className="text-red-500">{error}</p>}
+
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 className="text-2xl font-bold">Overdue Invoices</h2>
+
+          <div className="flex flex-col items-end gap-2">
+            {/* Generate button */}
+            <button
+              onClick={handleManualGenerate}
+              disabled={generating}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {generating ? (
+                <><span className="animate-spin inline-block">⏳</span> Generating...</>
+              ) : (
+                <>⚡ Generate Invoices</>
+              )}
+            </button>
+
+            {/* Result banner */}
+            {generateResult && (
+              <div className="text-xs rounded-lg px-3 py-2 bg-green-50 border border-green-200 text-green-700 flex flex-col gap-0.5 min-w-[240px]">
+                <span className="font-semibold">✅ Generation complete</span>
+                <span>
+                  <strong>{generateResult.created}</strong> created ·{" "}
+                  <strong>{generateResult.skipped}</strong> already existed ·{" "}
+                  <strong>{generateResult.total}</strong> subscriptions checked
+                </span>
+                {generateResult.errors?.length > 0 && (
+                  <span className="text-red-500">⚠️ {generateResult.errors[0]}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+
+        {/* ── Table ── */}
         {loading ? (
           <p>Loading...</p>
         ) : (
@@ -186,7 +198,7 @@ export default function OverdueInvoices() {
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {Array.isArray(invoices) && invoices.length > 0 ? (
+                {invoices.length > 0 ? (
                   invoices.map((invoice) => (
                     <tr key={invoice.id} className="border hover:bg-gray-100">
                       <td className="border px-4 py-2">{invoice.invoice_no}</td>
@@ -196,45 +208,48 @@ export default function OverdueInvoices() {
                       </td>
                       <td className="border px-4 py-2">{invoice.due_date}</td>
                       <td className="border px-4 py-2">
-                        <span
-                          className={`px-2 py-1 rounded text-sm ${
-                            invoice.status === "paid"
-                              ? "bg-green-500 text-white"
-                              : invoice.status === "partial"
-                              ? "bg-yellow-500 text-white"
-                              : "bg-red-500 text-white"
-                          }`}
-                        >
+                        <span className={`px-2 py-1 rounded text-sm ${
+                          invoice.status === "paid"    ? "bg-green-500 text-white" :
+                          invoice.status === "partial" ? "bg-yellow-500 text-white" :
+                                                         "bg-red-500 text-white"
+                        }`}>
                           {invoice.status}
                         </span>
                       </td>
                       <td className="border px-4 py-2 flex gap-2">
-                        <button 
+                        <button
                           onClick={() => handleGenerateInvoice(invoice.id)}
-                          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-                          View Invoice 
+                          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-sm"
+                        >
+                          View PDF
+                        </button>
+                        <button
+                          onClick={() => { setProofInvoice(invoice); setProofModalOpen(true); }}
+                          className="bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600 text-sm"
+                        >
+                          Proof
                         </button>
                         {invoice.status !== "paid" && (
                           <button
-                            className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
                             onClick={() => openPaymentModal(invoice)}
+                            className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
                           >
-                            Pay Invoice
+                            Pay
                           </button>
                         )}
                         <button
-                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                           onClick={() => handleDeleteInvoice(invoice.id)}
+                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm"
                         >
-                          Delete Invoice
+                          Delete
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="text-center py-4">
-                      No unpaid invoices found
+                    <td colSpan={6} className="text-center py-4 text-gray-500">
+                      No overdue invoices found
                     </td>
                   </tr>
                 )}
@@ -243,54 +258,25 @@ export default function OverdueInvoices() {
           </div>
         )}
 
-        {/* Payment Modal */}
+        {/* ── Proof Viewer Modal ── */}
+        {proofModalOpen && proofInvoice && (
+          <ProofViewerModal
+            invoice={proofInvoice}
+            onClose={() => { setProofModalOpen(false); setProofInvoice(null); }}
+          />
+        )}
+
+        {/* ── Payment Modal (with proof upload) ── */}
         {modalOpen && selectedInvoice && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-              <h2 className="text-lg font-bold mb-4">Pay Invoice #{selectedInvoice.invoice_no}</h2>
-
-              <label className="block mb-2">Amount Paid</label>
-              <input
-                type="number"
-                name="amount_paid"
-                value={paymentData.amount_paid}
-                onChange={handlePaymentChange}
-                className="w-full p-2 border rounded mb-4"
-              />
-
-              <label className="block mb-2">Payment Method</label>
-              <select
-                name="payment_method"
-                value={paymentData.payment_method}
-                onChange={handlePaymentChange}
-                className="w-full p-2 border rounded mb-4"
-              >
-                <option value="MPESA">MOMO</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="card">CARD</option>
-                <option value="cash">CASH</option>
-              </select>
-
-              <label className="block mb-2">Transaction ID</label>
-              <input
-                type="text"
-                name="transaction_id"
-                value={paymentData.transaction_id}
-                onChange={handlePaymentChange}
-                className="w-full p-2 border rounded mb-4"
-                placeholder="Optional"
-              />
-
-              <div className="flex justify-end gap-2">
-                <button className="bg-gray-400 px-4 py-2 rounded" onClick={() => setModalOpen(false)}>
-                  Cancel
-                </button>
-                <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={submitPayment}>
-                  Submit Payment
-                </button>
-              </div>
-            </div>
-          </div>
+          <PaymentModal
+            invoice={selectedInvoice}
+            onClose={() => { setModalOpen(false); setSelectedInvoice(null); }}
+            onSuccess={(invoiceId, newStatus) => {
+              setInvoices((prev) =>
+                prev.map((inv) => inv.id === invoiceId ? { ...inv, status: newStatus } : inv)
+              );
+            }}
+          />
         )}
       </div>
     </DashboardLayout>

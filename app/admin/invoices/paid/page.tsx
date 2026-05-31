@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
+import GenerateInvoicesButton from "@/components/GenerateInvoicesButton";
 import PaymentModal from "@/components/PaymentModal";
 import ProofViewerModal from "@/components/ProofViewerModal";
 
@@ -18,32 +19,7 @@ export default function PaidInvoices() {
   const [proofInvoice, setProofInvoice]       = useState<any | null>(null);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
-  // ── Generate invoices state ───────────────────────────────────────────────
-  const [generating, setGenerating]         = useState(false);
-  const [generateResult, setGenerateResult] = useState<{
-    created: number; skipped: number; total: number; errors: string[];
-  } | null>(null);
-
   const getToken = () => localStorage.getItem("authToken") || "";
-
-  // ── Generate invoices ─────────────────────────────────────────────────────
-  const generateInvoices = useCallback(async (silent = false) => {
-    const token = getToken();
-    if (!token) return;
-    if (!silent) setGenerating(true);
-    try {
-      const res = await fetch(`${API_URL}/invoices/generate`, {
-        method: "POST",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setGenerateResult(data);
-        setTimeout(() => setGenerateResult(null), 8000);
-      }
-    } catch {}
-    finally { if (!silent) setGenerating(false); }
-  }, []);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -54,7 +30,7 @@ export default function PaidInvoices() {
 
   useEffect(() => {
     if (authToken) {
-      generateInvoices(true).then(() => fetchInvoices());
+      fetchInvoices();
     }
   }, [authToken]);
 
@@ -77,14 +53,6 @@ export default function PaidInvoices() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // ── Manual generate + refresh ─────────────────────────────────────────────
-  const handleManualGenerate = async () => {
-    if (!confirm("Generate invoices for all active subscriptions now?")) return;
-    setGenerating(true);
-    await generateInvoices(false);
-    await fetchInvoices();
   };
 
   // ── Download PDF ──────────────────────────────────────────────────────────
@@ -144,32 +112,7 @@ export default function PaidInvoices() {
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <h2 className="text-2xl font-bold">Paid Invoices</h2>
-
-          <div className="flex flex-col items-end gap-2">
-            <button
-              onClick={handleManualGenerate}
-              disabled={generating}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {generating
-                ? <><span className="animate-spin inline-block">⏳</span> Generating...</>
-                : <>⚡ Generate Invoices</>}
-            </button>
-
-            {generateResult && (
-              <div className="text-xs rounded-lg px-3 py-2 bg-green-50 border border-green-200 text-green-700 flex flex-col gap-0.5 min-w-[240px]">
-                <span className="font-semibold">✅ Generation complete</span>
-                <span>
-                  <strong>{generateResult.created}</strong> created ·{" "}
-                  <strong>{generateResult.skipped}</strong> already existed ·{" "}
-                  <strong>{generateResult.total}</strong> subscriptions checked
-                </span>
-                {generateResult.errors?.length > 0 && (
-                  <span className="text-red-500">⚠️ {generateResult.errors[0]}</span>
-                )}
-              </div>
-            )}
-          </div>
+          <GenerateInvoicesButton onDone={() => fetchInvoices()} />
         </div>
 
         {error && <p className="text-red-500 mb-4">{error}</p>}

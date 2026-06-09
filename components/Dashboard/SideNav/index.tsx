@@ -1,48 +1,419 @@
-import { useState, useEffect } from "react";
-import { ChevronDownIcon } from '@heroicons/react/solid';
+import { useState, useEffect, useRef } from "react";
+import { ChevronDownIcon } from "@heroicons/react/solid";
 import Link from "next/link";
 
+// ─────────────────────────────────────────────
+// ROLE CONSTANTS
+// ─────────────────────────────────────────────
+const ROLES = {
+  SUPER_USER: "super_user",        // Admin / Owner       → FULL on everything
+  MANAGER: "manager",              // Operation Manager   → MANAGE on most
+  FINANCE: "finance",              // Finance/Accountant  → FULL on financial modules
+  TECHNICAL_SUPPORT: "technical_support", // Technical Support → owns tickets/jobs
+  TECHNICIAN: "technician",        // Field Technician    → assigned work only
+  SALES_MANAGER: "sales_manager",  // Sales Manager       → sales pipeline
+  SALES: "sales",                  // Salesperson         → own clients/leads
+};
+
+// ─────────────────────────────────────────────
+// ACCESS HELPERS
+// ─────────────────────────────────────────────
+const is = (role, ...allowed) => allowed.includes(role);
+
+const canSee = {
+  dashboard:         (r) => true,  // all roles
+  settings:          (r) => is(r, ROLES.SUPER_USER),
+  reports:           (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  clients:           (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  plans:             (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  pettycashFloats:   (r) => true,  // all roles can request
+  subscriptions:     (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  invoices:          (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.SALES_MANAGER, ROLES.SALES),
+  payments:          (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.SALES_MANAGER, ROLES.SALES),
+  stock:             (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  jobs:              (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  supports:          (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  expenses:          (r) => true,  // all roles can request
+  suppliers:         (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT),
+  assets:            (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN),
+  userManagement:    (r) => is(r, ROLES.SUPER_USER, ROLES.SALES_MANAGER),  // Sales Manager: VIEW only
+  purchases:         (r) => true,  // all roles can submit requests
+  delivery:          (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES),
+  chat:              (r) => is(r, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN),
+};
+
+// ─────────────────────────────────────────────
+// SUB-ITEM ACCESS  (label, href, roles[])
+// ─────────────────────────────────────────────
+const reportItems = (role) => {
+  const items = [];
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.SALES_MANAGER)) items.push({ label: "Purchases", href: "/admin/report/purchases" });
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE))                       items.push({ label: "Expenses",  href: "/admin/report/expenses"  });
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.SALES_MANAGER, ROLES.SALES)) items.push({ label: "Sales", href: "/admin/report/sales" });
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN)) items.push({ label: "Stock", href: "/admin/report/stock" });
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.SALES_MANAGER))                items.push({ label: "Users Performance", href: "/admin/report/performance" });
+  return items;
+};
+
+const clientItems = (role) => {
+  const canAdd  = is(role, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.SALES_MANAGER, ROLES.SALES);
+  const canList = true;
+  return [
+    canList && { label: "List",    href: "/admin/clients/list" },
+    canAdd  && { label: "Add New", href: "/admin/clients/add" },
+  ].filter(Boolean);
+};
+
+const stockItems = (role) => {
+  const canManage  = is(role, ROLES.SUPER_USER, ROLES.MANAGER);
+  const canRequest = is(role, ROLES.TECHNICAL_SUPPORT, ROLES.TECHNICIAN, ROLES.SALES_MANAGER, ROLES.SALES);
+  const viewOnly   = is(role, ROLES.FINANCE);
+  const items = [];
+  if (canManage) {
+    items.push({ label: "Add Product",      href: "/admin/stock/products/add"  });
+    items.push({ label: "List Products",    href: "/admin/stock/products/list" });
+    items.push({ label: "Delivered Stock",  href: "/admin/stock/stock_out"     });
+    items.push({ label: "Stock",            href: "/admin/stock/stock_in"      });
+    items.push({ label: "New Stock",        href: "/admin/stock/new_stock"     });
+  } else if (viewOnly) {
+    items.push({ label: "View Stock Value", href: "/admin/stock/stock_in"      });
+  } else if (canRequest) {
+    items.push({ label: "Request Stock",    href: "/admin/stock/request"       });
+    if (is(role, ROLES.TECHNICIAN)) {
+      items.push({ label: "Update Issued Items", href: "/admin/stock/update_issued" });
+    }
+  }
+  return items;
+};
+
+const jobItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER)) {
+    return [
+      { label: "List",    href: "/admin/jobs/list" },
+      { label: "Add New", href: "/admin/jobs/add"  },
+    ];
+  }
+  if (is(role, ROLES.TECHNICAL_SUPPORT)) {
+    return [
+      { label: "My Support Jobs", href: "/admin/jobs/list" },
+      { label: "Add New",         href: "/admin/jobs/add"  },
+    ];
+  }
+  if (is(role, ROLES.TECHNICIAN)) {
+    return [{ label: "My Assigned Jobs", href: "/admin/jobs/list" }];
+  }
+  if (is(role, ROLES.SALES_MANAGER, ROLES.SALES)) {
+    return [{ label: "Client Follow-up Jobs", href: "/admin/jobs/list" }];
+  }
+  if (is(role, ROLES.FINANCE)) {
+    return [{ label: "View Cost", href: "/admin/jobs/list" }];
+  }
+  return [];
+};
+
+const supportsItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.TECHNICAL_SUPPORT)) {
+    return [
+      { label: "List",    href: "/admin/supports/list" },
+      { label: "Add New", href: "/admin/supports/add"  },
+    ];
+  }
+  if (is(role, ROLES.MANAGER)) {
+    return [
+      { label: "List (Escalations)", href: "/admin/supports/list" },
+    ];
+  }
+  if (is(role, ROLES.TECHNICIAN)) {
+    return [{ label: "My Assigned Tickets", href: "/admin/supports/list" }];
+  }
+  if (is(role, ROLES.SALES_MANAGER, ROLES.SALES)) {
+    return [
+      { label: "Client Issues", href: "/admin/supports/list" },
+      { label: "Create Request", href: "/admin/supports/add" },
+    ];
+  }
+  return [];
+};
+
+const invoiceItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.FINANCE)) {
+    return [
+      { label: "Overdue Invoices", href: "/admin/invoices/overdue" },
+      { label: "Paid Invoices",    href: "/admin/invoices/paid"    },
+      { label: "Unpaid Invoices",  href: "/admin/invoices/unpaid"  },
+    ];
+  }
+  // Manager, Sales Manager, Sales → VIEW only
+  return [
+    { label: "Overdue Invoices", href: "/admin/invoices/overdue" },
+    { label: "Paid Invoices",    href: "/admin/invoices/paid"    },
+    { label: "Unpaid Invoices",  href: "/admin/invoices/unpaid"  },
+  ];
+};
+
+const paymentItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.FINANCE)) {
+    return [
+      { label: "List",             href: "/admin/payments/list"   },
+      { label: "Approve Payment",  href: "/admin/invoices/unpaid" },
+    ];
+  }
+  // Manager, Sales, Sales Manager → view status only
+  return [{ label: "Payment Status", href: "/admin/payments/list" }];
+};
+
+const floatItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.FINANCE)) {
+    return [
+      { label: "List",         href: "/admin/float/list"    },
+      { label: "Approve",      href: "/admin/float/approve" },
+      { label: "Add Request",  href: "/admin/float/request" },
+    ];
+  }
+  if (is(role, ROLES.MANAGER)) {
+    return [
+      { label: "List",        href: "/admin/float/list"    },
+      { label: "Add Request", href: "/admin/float/request" },
+    ];
+  }
+  // All other roles → request only
+  return [{ label: "Add Request", href: "/admin/float/request" }];
+};
+
+const expenseItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.FINANCE)) {
+    return [
+      { label: "List",         href: "/admin/expense/list"    },
+      { label: "Approve",      href: "/admin/expense/approve" },
+      { label: "Add New",      href: "/admin/expense/add"     },
+    ];
+  }
+  if (is(role, ROLES.MANAGER)) {
+    return [
+      { label: "List",    href: "/admin/expense/list" },
+      { label: "Add New", href: "/admin/expense/add"  },
+    ];
+  }
+  return [{ label: "Add Request", href: "/admin/expense/add" }];
+};
+
+const supplierItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.FINANCE)) {
+    return [
+      { label: "List",    href: "/admin/suppliers/list" },
+      { label: "Add New", href: "/admin/suppliers/add"  },
+    ];
+  }
+  if (is(role, ROLES.MANAGER)) {
+    return [
+      { label: "List",    href: "/admin/suppliers/list" },
+      { label: "Add New", href: "/admin/suppliers/add"  },
+    ];
+  }
+  // Technical Support → view tech suppliers only
+  return [{ label: "View Tech Suppliers", href: "/admin/suppliers/list" }];
+};
+
+const assetItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER)) {
+    return [
+      { label: "List Assets",    href: "/admin/assets/list" },
+      { label: "Add New Asset",  href: "/admin/assets/add"  },
+    ];
+  }
+  if (is(role, ROLES.TECHNICAL_SUPPORT)) {
+    return [
+      { label: "Manage Tech Assets", href: "/admin/assets/list" },
+      { label: "Add Tech Asset",     href: "/admin/assets/add"  },
+    ];
+  }
+  if (is(role, ROLES.TECHNICIAN)) {
+    return [{ label: "My Assigned Equipment", href: "/admin/assets/list" }];
+  }
+  // Finance → view value/depreciation
+  return [{ label: "View Asset Values", href: "/admin/assets/list" }];
+};
+
+const userMgmtItems = (role) => {
+  if (is(role, ROLES.SUPER_USER)) {
+    return [
+      { label: "List Users",    href: "/admin/user/list" },
+      { label: "Add New User",  href: "/admin/user/add"  },
+    ];
+  }
+  // Sales Manager → view sales team only
+  return [{ label: "View Sales Team", href: "/admin/user/list" }];
+};
+
+const purchaseItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.FINANCE)) {
+    return [
+      { label: "List",              href: "/admin/purchases/list" },
+      { label: "Add New Purchase",  href: "/admin/purchases/add"  },
+      { label: "Process Payment",   href: "/admin/purchases/pay"  },
+    ];
+  }
+  if (is(role, ROLES.MANAGER)) {
+    return [
+      { label: "List",             href: "/admin/purchases/list" },
+      { label: "Review Requests",  href: "/admin/purchases/review" },
+    ];
+  }
+  return [{ label: "Submit Request", href: "/admin/purchases/add" }];
+};
+
+const deliveryItems = (role) => {
+  if (is(role, ROLES.SUPER_USER, ROLES.MANAGER)) {
+    return [
+      { label: "List",                 href: "/admin/delivery_note/list" },
+      { label: "Create New Delivery",  href: "/admin/delivery_note/add"  },
+    ];
+  }
+  if (is(role, ROLES.TECHNICIAN)) {
+    return [{ label: "Update Delivery / Installation", href: "/admin/delivery_note/list" }];
+  }
+  if (is(role, ROLES.SALES_MANAGER, ROLES.SALES)) {
+    return [{ label: "Client Delivery Status", href: "/admin/delivery_note/list" }];
+  }
+  // Finance → view cost/status
+  return [{ label: "Delivery Cost & Status", href: "/admin/delivery_note/list" }];
+};
+
+// ─────────────────────────────────────────────
+// REUSABLE COLLAPSIBLE NAV ITEM
+// Uses a ref to measure real content height so items are never clipped.
+// The panel only collapses when the header button is clicked — not on
+// child link clicks or any other event.
+// ─────────────────────────────────────────────
+const NavGroup = ({ label, isOpen, toggle, items }) => {
+  const contentRef = useRef(null);
+  const [height, setHeight] = useState(0);
+
+  // Recalculate whenever items change or panel opens/closes
+  useEffect(() => {
+    if (contentRef.current) {
+      setHeight(contentRef.current.scrollHeight);
+    }
+  }, [isOpen, items]);
+
+  return (
+    <li>
+      {/* Clicking ONLY this button toggles the panel */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent any parent handlers
+          toggle();
+        }}
+        className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
+      >
+        <span className="flex items-center justify-between">
+          <span>{label}</span>
+          <ChevronDownIcon
+            className={`w-5 h-5 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
+          />
+        </span>
+      </button>
+
+      {/* Height animates from 0 → real content height; overflow hidden only while animating */}
+      <ul
+        ref={contentRef}
+        style={{
+          maxHeight: isOpen ? `${height}px` : "0px",
+          overflow: "hidden",
+          transition: "max-height 350ms ease-in-out",
+        }}
+        className="ml-6 space-y-2 mt-1"
+      >
+        {items.map(({ label: itemLabel, href }) => (
+          <li key={href}>
+            <Link href={href}>
+              {/* e.stopPropagation so clicking a link never bubbles up to the toggle button */}
+              <span
+                onClick={(e) => e.stopPropagation()}
+                className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer"
+              >
+                {itemLabel}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+};
+
+// ─────────────────────────────────────────────
+// ROLE BADGE  (visual indicator in nav header)
+// ─────────────────────────────────────────────
+const ROLE_LABELS = {
+  super_user:        { label: "Admin",            color: "bg-red-600"    },
+  manager:           { label: "Ops Manager",      color: "bg-blue-600"   },
+  finance:           { label: "Finance",          color: "bg-green-600"  },
+  technical_support: { label: "Tech Support",     color: "bg-yellow-600" },
+  technician:        { label: "Technician",       color: "bg-orange-600" },
+  sales_manager:     { label: "Sales Manager",    color: "bg-purple-600" },
+  sales:             { label: "Sales",            color: "bg-pink-600"   },
+};
+
+// ─────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────
 const SideNav = () => {
-  const [isClientsOpen, setIsClientsOpen] = useState(false);
-  const [isPlansOpen, setIsPlansOpen] = useState(false);
-  const [isSubsOpen, setIsSubsOpen] = useState(false);
-  const [isInvoicesOpen, setIsInvoicesOpen] = useState(false);
-  const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
-  const [isStockOpen, setIsStockOpen] = useState(false);
-  const [isJobsOpen, setIsJobsOpen] = useState(false);
-  const [isUsersOpen, setIsUsersOpen] = useState(false);
-  const [isSupportsOpen, setIsSupportsOpen] = useState(false);
   const [userRole, setUserRole] = useState("");
-  const [isExpensesOpen, setIsExpensesOpen] = useState(false);
-  const [isSuppliersOpen, setIsSuppliersOpen] = useState(false);
-  const [isAssetsOpen, setIsAssetsOpen] = useState(false);
-  const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
-  const [isDeliveryNotesOpen, setIsDeliveryNotesOpen] = useState(false);
-  const [isReportsOpen, setIsReportsOpen] = useState(false);
-  const [isFloatOpen, setIsFloatOpen] = useState(false);
-
-
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Dropdown states
+  const [open, setOpen] = useState({
+    reports: false, clients: false, plans: false, floats: false,
+    subscriptions: false, invoices: false, payments: false, stock: false,
+    jobs: false, supports: false, expenses: false, suppliers: false,
+    assets: false, users: false, purchases: false, delivery: false,
+  });
+
+  const toggle = (key) => setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem("user"));
-    if (userData) {
-      setUserRole(userData.role); // Assuming userData has a 'role' field
-    }
+    const userData = JSON.parse(localStorage.getItem("user") || "null");
+    if (userData?.role) setUserRole(userData.role);
   }, []);
-  const matchesSearch = (text) => {
-    return text.toLowerCase().includes(searchQuery.toLowerCase());
+
+  const matchesSearch = (text) =>
+    text.toLowerCase().includes(searchQuery.toLowerCase());
+
+  const roleBadge = ROLE_LABELS[userRole];
+
+  // Helper: render a NavGroup only if the role can see it AND search matches
+  const Group = ({ seeKey, label, openKey, items }) => {
+    if (!canSee[seeKey]?.(userRole)) return null;
+    if (searchQuery && !matchesSearch(label)) return null;
+    if (!items || items.length === 0) return null;
+    return (
+      <NavGroup
+        label={label}
+        isOpen={open[openKey]}
+        toggle={() => toggle(openKey)}
+        items={items}
+      />
+    );
   };
 
   return (
     <nav className="w-64 bg-gray-800 text-white h-screen p-4 overflow-y-auto">
 
-      {/* Search input added */}
+      {/* Role badge */}
+      {roleBadge && (
+        <div className="mb-3 flex items-center gap-2">
+          <span className={`text-xs font-semibold px-2 py-1 rounded ${roleBadge.color}`}>
+            {roleBadge.label}
+          </span>
+        </div>
+      )}
+
+      {/* Search */}
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Search menu..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full p-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -50,506 +421,169 @@ const SideNav = () => {
       </div>
 
       <ul className="space-y-4">
-        <li>
-          <Link href="/admin/dashboard">
-            <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Dashboard</span>
-          </Link>
-        </li>
 
-        {/* Conditionally render setings */}
-        {(userRole === 'super_user') && (
+        {/* Dashboard — all roles */}
+        {(!searchQuery || matchesSearch("Dashboard")) && (
           <li>
-            <Link href="/admin/settings">
-              <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">Settings</span>
+            <Link href="/admin/dashboard">
+              <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">
+                Dashboard
+              </span>
             </Link>
           </li>
         )}
-        {/* Conditionally render Clients */}
-        {(userRole === 'super_user' || userRole === 'sales') && matchesSearch("Clients") && (
+
+        {/* Settings — super_user only */}
+        {canSee.settings(userRole) && (!searchQuery || matchesSearch("Settings")) && (
           <li>
-            <button
-              onClick={() => setIsReportsOpen(!isReportsOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Reports
-              <span className={`inline-block transition-transform duration-200 ${isReportsOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
+            <Link href="/admin/settings">
+              <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">
+                Settings
               </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isReportsOpen ? "max-h-100 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/report/purchases">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Purchases</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/report/expenses">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Expenses</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/report/sales">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Sales</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/report/stock">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Stock</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/report/performance">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Users Performance</span>
-                </Link>
-              </li>
-            </ul>
+            </Link>
           </li>
         )}
 
-        {(userRole === 'super_user' || userRole === 'manager') && matchesSearch("Clients") && (
-          <li>
-            <button
-              onClick={() => setIsClientsOpen(!isClientsOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Clients
-              <span className={`inline-block transition-transform duration-200 ${isClientsOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isClientsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/clients/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/clients/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
+        {/* Reports */}
+        <Group
+          seeKey="reports" label="Reports" openKey="reports"
+          items={reportItems(userRole)}
+        />
 
-        {/* Chat Sessions */}
-        {(userRole === 'super_user' || userRole === 'technician' || userRole === 'manager') && (
+        {/* Clients */}
+        <Group
+          seeKey="clients" label="Clients" openKey="clients"
+          items={clientItems(userRole)}
+        />
+
+        {/* Chat — super_user, manager, technical_support, technician */}
+        {canSee.chat(userRole) && (!searchQuery || matchesSearch("Chat Sessions")) && (
           <li>
             <Link href="/admin/chat">
               <span className="block p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">
                 💬 Chat Sessions
-                {/* You can add a badge here later for waiting count */}
               </span>
             </Link>
           </li>
         )}
 
-        {/* Conditionally render Plans */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsPlansOpen(!isPlansOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Plans
-              <span className={`inline-block transition-transform duration-200 ${isPlansOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isPlansOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/plans/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/plans/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-        {/* Conditionally render Floats */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsFloatOpen(!isFloatOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Pettycash Floats
-              <span className={`inline-block transition-transform duration-200 ${isFloatOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isFloatOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/float/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/float/request">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add  Request</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
+        {/* Plans — all roles can view; only super_user/manager can manage */}
+        {canSee.plans(userRole) && (!searchQuery || matchesSearch("Plans")) && (
+          <NavGroup
+            label="Plans"
+            isOpen={open.plans}
+            toggle={() => toggle("plans")}
+            items={
+              is(userRole, ROLES.SUPER_USER, ROLES.MANAGER)
+                ? [
+                    { label: "List",    href: "/admin/plans/list" },
+                    { label: "Add New", href: "/admin/plans/add"  },
+                  ]
+                : [{ label: "View Plans", href: "/admin/plans/list" }]
+            }
+          />
         )}
 
-        {/* Conditionally render Subscriptions */}
-        {(userRole === 'super_user' || userRole === 'manager' || userRole === 'sales') && (
-          <li>
-            <button
-              onClick={() => setIsSubsOpen(!isSubsOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Subscriptions
-              <span className={`inline-block transition-transform duration-200 ${isSubsOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isSubsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/subscriptions/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/subscriptions/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
+        {/* Pettycash Floats — all roles */}
+        {canSee.pettycashFloats(userRole) && (!searchQuery || matchesSearch("Pettycash Floats")) && (
+          <NavGroup
+            label="Pettycash Floats"
+            isOpen={open.floats}
+            toggle={() => toggle("floats")}
+            items={floatItems(userRole)}
+          />
         )}
 
-        {/* Conditionally render Invoices */}
-        {(userRole === 'super_user' || userRole === 'sales' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsInvoicesOpen(!isInvoicesOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Invoices
-              <span className={`inline-block transition-transform duration-200 ${isInvoicesOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isInvoicesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/invoices/overdue">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Overdue Invoices</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/invoices/paid">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Paid Invoices</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/invoices/unpaid">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Unpaid Invoices</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
+        {/* Subscriptions */}
+        {canSee.subscriptions(userRole) && (!searchQuery || matchesSearch("Subscriptions")) && (
+          <NavGroup
+            label="Subscriptions"
+            isOpen={open.subscriptions}
+            toggle={() => toggle("subscriptions")}
+            items={
+              is(userRole, ROLES.SUPER_USER, ROLES.MANAGER, ROLES.FINANCE, ROLES.SALES_MANAGER)
+                ? [
+                    { label: "List",    href: "/admin/subscriptions/list" },
+                    { label: "Add New", href: "/admin/subscriptions/add"  },
+                  ]
+                : [{ label: "View Status", href: "/admin/subscriptions/list" }]
+            }
+          />
         )}
 
-        {/* Conditionally render Payments */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsPaymentsOpen(!isPaymentsOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Payments
-              <span className={`inline-block transition-transform duration-200 ${isPaymentsOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isPaymentsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/payments/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/invoices/unpaid">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
+        {/* Invoices */}
+        <Group
+          seeKey="invoices" label="Invoices" openKey="invoices"
+          items={invoiceItems(userRole)}
+        />
+
+        {/* Payments */}
+        <Group
+          seeKey="payments" label="Payments" openKey="payments"
+          items={paymentItems(userRole)}
+        />
+
+        {/* Stock Management */}
+        <Group
+          seeKey="stock" label="Stock Management" openKey="stock"
+          items={stockItems(userRole)}
+        />
+
+        {/* Jobs */}
+        <Group
+          seeKey="jobs" label="Jobs" openKey="jobs"
+          items={jobItems(userRole)}
+        />
+
+        {/* Supports */}
+        <Group
+          seeKey="supports" label="Supports" openKey="supports"
+          items={supportsItems(userRole)}
+        />
+
+        {/* Expenses */}
+        {canSee.expenses(userRole) && (!searchQuery || matchesSearch("Expenses")) && (
+          <NavGroup
+            label="Expenses"
+            isOpen={open.expenses}
+            toggle={() => toggle("expenses")}
+            items={expenseItems(userRole)}
+          />
         )}
 
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsStockOpen(!isStockOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Stock Management
-              <span className={`inline-block transition-transform duration-200 ${isStockOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isStockOpen ? "max-h-80 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <div className="group">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out cursor-pointer">
-                    Products
-                  </span>
-                  <ul className="ml-4 mt-2 space-y-1 hidden group-hover:block">
-                    <li>
-                      <Link href="/admin/stock/products/add">
-                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Add Product</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/admin/stock/products/list">
-                        <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">List Products</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </li>
-              <li>
-                <Link href="/admin/stock/stock_out">
-                  <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Delivered Stock</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/stock/stock_in">
-                  <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">Stock</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/stock/new_stock">
-                  <span className="block p-2 bg-gray-600 hover:bg-gray-500 rounded transition">New Stock</span>
-                </Link>
-              </li>
+        {/* Suppliers */}
+        <Group
+          seeKey="suppliers" label="Suppliers" openKey="suppliers"
+          items={supplierItems(userRole)}
+        />
 
+        {/* Asset Management */}
+        <Group
+          seeKey="assets" label="Asset Management" openKey="assets"
+          items={assetItems(userRole)}
+        />
 
+        {/* User Management — super_user + sales_manager (view-only) */}
+        <Group
+          seeKey="userManagement" label="User Management" openKey="users"
+          items={userMgmtItems(userRole)}
+        />
 
-            </ul>
-          </li>
-        )}
-        {/* Conditionally render Jobs */}
-        {(userRole === 'super_user') && (
-          <li>
-            <button
-              onClick={() => setIsJobsOpen(!isJobsOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Jobs
-              <span className={`inline-block transition-transform duration-200 ${isJobsOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isJobsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/jobs/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/jobs/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
+        {/* Purchase Management */}
+        {canSee.purchases(userRole) && (!searchQuery || matchesSearch("Purchase Management")) && (
+          <NavGroup
+            label="Purchase Management"
+            isOpen={open.purchases}
+            toggle={() => toggle("purchases")}
+            items={purchaseItems(userRole)}
+          />
         )}
 
-        {/* Conditionally render Supports */}
-        {(userRole === 'super_user' || userRole === 'technician') && (
-          <li>
-            <button
-              onClick={() => setIsSupportsOpen(!isSupportsOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Supports
-              <span className={`inline-block transition-transform duration-200 ${isSupportsOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isSupportsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/supports/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/supports/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-
-        {/* Conditionally render Expenses */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsExpensesOpen(!isExpensesOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Expenses
-              <span className={`inline-block transition-transform duration-200 ${isExpensesOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isExpensesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/expense/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/expense/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-
-        {/* Conditionally render Suppliers */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsSuppliersOpen(!isSuppliersOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Suppliers
-              <span className={`inline-block transition-transform duration-200 ${isSuppliersOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isSuppliersOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/suppliers/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/suppliers/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-
-        {/* Conditionally render Asset Management */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsAssetsOpen(!isAssetsOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Asset Management
-              <span className={`inline-block transition-transform duration-200 ${isAssetsOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isAssetsOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/assets/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Assets</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/assets/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Asset</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-        {/* Conditionally render Asset Management */}
-        {(userRole === 'super_user') && (
-          <li>
-            <button
-              onClick={() => setIsUsersOpen(!isUsersOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              User Management
-              <span className={`inline-block transition-transform duration-200 ${isUsersOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isUsersOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/user/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List Users</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/user/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New User</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-        {/* Conditionally render Asset Management */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsPurchasesOpen(!isPurchasesOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Purchase Management
-              <span className={`inline-block transition-transform duration-200 ${isPurchasesOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isPurchasesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/purchases/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/purchases/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Add New Purchases</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-
-        {/* Conditionally render deluvery notes Management */}
-        {(userRole === 'super_user' || userRole === 'manager') && (
-          <li>
-            <button
-              onClick={() => setIsDeliveryNotesOpen(!isDeliveryNotesOpen)}
-              className="block w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-lg transition duration-200 ease-in-out"
-            >
-              Delivery Management
-              <span className={`inline-block transition-transform duration-200 ${isDeliveryNotesOpen ? "rotate-180" : "rotate-0"}`}>
-                <ChevronDownIcon className="w-5 h-5 inline-block" />
-              </span>
-            </button>
-            <ul className={`ml-6 space-y-2 ${isDeliveryNotesOpen ? "max-h-40 overflow-hidden transition-all duration-500 ease-in-out" : "max-h-0 overflow-hidden"}`}>
-              <li>
-                <Link href="/admin/delivery_note/list">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">List</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/delivery_note/add">
-                  <span className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-200 ease-in-out">Create New Delivery</span>
-                </Link>
-              </li>
-            </ul>
-          </li>
-        )}
-
-
+        {/* Delivery Management */}
+        <Group
+          seeKey="delivery" label="Delivery Management" openKey="delivery"
+          items={deliveryItems(userRole)}
+        />
 
       </ul>
     </nav>

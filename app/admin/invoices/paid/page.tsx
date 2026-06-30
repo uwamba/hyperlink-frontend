@@ -8,6 +8,15 @@ import ProofViewerModal from "@/components/ProofViewerModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
+const statusBadge = (status: string) => {
+  const map: Record<string, string> = {
+    paid:    "bg-green-100 text-green-700",
+    partial: "bg-yellow-100 text-yellow-700",
+    unpaid:  "bg-red-100 text-red-700",
+  };
+  return `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${map[status] ?? "bg-gray-100 text-gray-600"}`;
+};
+
 export default function PaidInvoices() {
   const [invoices, setInvoices]               = useState<any[]>([]);
   const [authToken, setAuthToken]             = useState<string | null>(null);
@@ -21,7 +30,6 @@ export default function PaidInvoices() {
 
   const getToken = () => localStorage.getItem("authToken") || "";
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) setError("Authentication required. Please log in.");
@@ -29,12 +37,9 @@ export default function PaidInvoices() {
   }, []);
 
   useEffect(() => {
-    if (authToken) {
-      fetchInvoices();
-    }
+    if (authToken) fetchInvoices();
   }, [authToken]);
 
-  // ── Fetch paid invoices ───────────────────────────────────────────────────
   const fetchInvoices = async () => {
     const token = getToken();
     if (!token) return;
@@ -55,7 +60,6 @@ export default function PaidInvoices() {
     }
   };
 
-  // ── Download PDF ──────────────────────────────────────────────────────────
   const handleGenerateInvoice = async (invoiceId: string) => {
     const token = getToken();
     try {
@@ -77,7 +81,6 @@ export default function PaidInvoices() {
     }
   };
 
-  // ── Delete ────────────────────────────────────────────────────────────────
   const handleDeleteInvoice = async (invoiceId: string) => {
     const token = getToken();
     if (!token) return;
@@ -98,8 +101,6 @@ export default function PaidInvoices() {
     }
   };
 
-
-  // ── Payment modal ─────────────────────────────────────────────────────────
   const openPaymentModal = (invoice: any) => {
     setSelectedInvoice(invoice);
     setModalOpen(true);
@@ -109,102 +110,121 @@ export default function PaidInvoices() {
     <DashboardLayout>
       <div className="container mx-auto p-6 overflow-x-auto">
 
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <h2 className="text-2xl font-bold">Paid Invoices</h2>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Paid Invoices</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{invoices.length} invoice{invoices.length !== 1 ? "s" : ""}</p>
+          </div>
           <GenerateInvoicesButton onDone={() => fetchInvoices()} />
         </div>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
-        {/* ── Table ── */}
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <table className="w-full border-collapse border border-gray-200 shadow-md rounded-lg">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th className="border px-4 py-2">Invoice No</th>
-                <th className="border px-4 py-2">Client ID</th>
-                <th className="border px-4 py-2">Amount</th>
-                <th className="border px-4 py-2">Due Date</th>
-                <th className="border px-4 py-2">Status</th>
-                <th className="border px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {invoices.length > 0 ? (
-                invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border hover:bg-gray-100">
-                    <td className="border px-4 py-2">{invoice.invoice_no}</td>
-                    <td className="border px-4 py-2">{invoice.client_id}</td>
-                    <td className="border px-4 py-2">Ksh {parseFloat(invoice.amount).toLocaleString()}</td>
-                    <td className="border px-4 py-2">{invoice.due_date}</td>
-                    <td className="border px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-sm ${
-                        invoice.status === "paid"    ? "bg-green-500 text-white" :
-                        invoice.status === "partial" ? "bg-yellow-500 text-white" :
-                                                       "bg-red-500 text-white"
-                      }`}>
-                        {invoice.status}
-                      </span>
-                    </td>
-                    <td className="border px-4 py-2 flex gap-2">
-                      <button
-                        onClick={() => handleGenerateInvoice(invoice.id)}
-                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-sm"
-                      >
-                        View PDF
-                      </button>
-                      <button
-                        onClick={() => { setProofInvoice(invoice); setProofModalOpen(true); }}
-                        className="bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600 text-sm"
-                      >
-                        Proof
-                      </button>
-                      {invoice.status !== "paid" && (
-                        <button
-                          onClick={() => openPaymentModal(invoice)}
-                          className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
-                        >
-                          Pay
-                        </button>
-                      )}
-                      <button
-                        onClick={() => { setSelectedInvoice(invoice); setDeleteConfirmationOpen(true); }}
-                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-4 text-gray-500">
-                    No paid invoices found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
         )}
 
-        {/* ── Delete Confirmation Modal ── */}
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        ) : (
+          <div className="rounded-xl overflow-hidden shadow-sm border border-gray-200">
+            <table className="min-w-full">
+              <thead className="bg-gray-800 text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Invoice No</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {invoices.length > 0 ? (
+                  invoices.map((invoice, idx) => (
+                    <tr key={invoice.id} className={`${idx % 2 === 1 ? "bg-gray-50" : "bg-white"} hover:bg-blue-50 transition-colors`}>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{invoice.invoice_no}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <div className="font-medium">{invoice.client?.name || "—"}</div>
+                        {invoice.client?.email && (
+                          <div className="text-xs text-gray-400">{invoice.client.email}</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                        RWF {parseFloat(invoice.amount).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{invoice.due_date}</td>
+                      <td className="px-4 py-3">
+                        <span className={statusBadge(invoice.status)}>{invoice.status}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            onClick={() => handleGenerateInvoice(invoice.id)}
+                            className="text-xs px-3 py-1 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          >
+                            PDF
+                          </button>
+                          <button
+                            onClick={() => { setProofInvoice(invoice); setProofModalOpen(true); }}
+                            className="text-xs px-3 py-1 rounded-md font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                          >
+                            Proof
+                          </button>
+                          {invoice.status !== "paid" && (
+                            <button
+                              onClick={() => openPaymentModal(invoice)}
+                              className="text-xs px-3 py-1 rounded-md font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            >
+                              Pay
+                            </button>
+                          )}
+                          <button
+                            onClick={() => { setSelectedInvoice(invoice); setDeleteConfirmationOpen(true); }}
+                            className="text-xs px-3 py-1 rounded-md font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-gray-400">
+                      No paid invoices found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
         {deleteConfirmationOpen && selectedInvoice && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-              <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
-              <p>Are you sure you want to delete invoice #{selectedInvoice.invoice_no}?</p>
-              <div className="flex justify-end gap-2 mt-4">
+            <div className="bg-white rounded-xl shadow-2xl w-96 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="text-lg font-bold text-gray-800">Confirm Deletion</h2>
+              </div>
+              <div className="px-6 py-4">
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to delete invoice <strong>#{selectedInvoice.invoice_no}</strong>? This cannot be undone.
+                </p>
+              </div>
+              <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
                 <button
-                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                   onClick={() => setDeleteConfirmationOpen(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
                   onClick={() => handleDeleteInvoice(selectedInvoice.id)}
                 >
                   Delete
@@ -214,7 +234,6 @@ export default function PaidInvoices() {
           </div>
         )}
 
-        {/* ── Proof Viewer Modal ── */}
         {proofModalOpen && proofInvoice && (
           <ProofViewerModal
             invoice={proofInvoice}
@@ -222,7 +241,6 @@ export default function PaidInvoices() {
           />
         )}
 
-        {/* ── Payment Modal (with proof upload) ── */}
         {modalOpen && selectedInvoice && (
           <PaymentModal
             invoice={selectedInvoice}

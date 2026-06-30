@@ -263,23 +263,31 @@ export default function SubscribeClient() {
       <form>
         <div className="mb-4">
           <label className="block text-sm font-medium">Client</label>
-          <input
-            type="text"
+          <select
             name="client_id"
             value={editForm.client_id}
             onChange={handleEditChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-          />
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm"
+          >
+            <option value="">— Select client —</option>
+            {clients.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium">Plan</label>
-          <input
-            type="text"
+          <select
             name="plan_id"
             value={editForm.plan_id}
             onChange={handleEditChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-          />
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm"
+          >
+            <option value="">— Select plan —</option>
+            {plans.map((p: any) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium">Start Date</label>

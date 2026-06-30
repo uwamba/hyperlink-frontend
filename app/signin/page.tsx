@@ -23,10 +23,15 @@ export default function SignInPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Server error. Please try again later.");
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Login failed");
+        throw new Error(data.error || data.message || "Login failed");
       }
 
       localStorage.setItem("authToken", data.token);

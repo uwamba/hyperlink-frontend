@@ -284,13 +284,19 @@ export default function ExpenseList() {
                 placeholder="Amount"
                 className="border px-3 py-2 rounded"
               />
-              <input
+              <select
                 name="category"
                 value={editForm.category}
-                onChange={handleEditChange}
-                placeholder="Category"
+                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
                 className="border px-3 py-2 rounded"
-              />
+              >
+                <option value="">Select a category</option>
+                <option value="Stationery">Stationery</option>
+                <option value="Transport">Transport</option>
+                <option value="Food">Food</option>
+                <option value="Office">Office</option>
+                <option value="Other">Other</option>
+              </select>
               <input
                 name="expense_date"
                 type="date"

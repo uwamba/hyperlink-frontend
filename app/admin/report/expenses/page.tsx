@@ -24,7 +24,7 @@ interface Expense {
   date: string;
   month?: number;
   total_amount: string;
-  type?: string;
+  category?: string;
 }
 
 type Granularity = "monthly" | "annually" | "daily";
@@ -105,8 +105,8 @@ export default function ExpensesReport() {
   const exportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(expenses.map((e) => ({
       Period:         fmtLabel(e, granularity),
+      Category:       e.category || "—",
       "Total Amount": e.total_amount,
-      ...(e.type ? { Type: e.type } : {}),
     })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Expenses Report");
@@ -201,9 +201,7 @@ export default function ExpensesReport() {
                   <thead className="bg-gray-800 text-white sticky top-0">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Period</th>
-                      {expenses.some((e) => e.type) && (
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Type</th>
-                      )}
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Category</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Total Amount</th>
                     </tr>
                   </thead>
@@ -211,9 +209,7 @@ export default function ExpensesReport() {
                     {expenses.length > 0 ? expenses.map((e, i) => (
                       <tr key={i} className={`${i % 2 === 1 ? "bg-gray-50" : "bg-white"} hover:bg-red-50 transition-colors`}>
                         <td className="px-4 py-3 text-sm text-gray-700">{fmtLabel(e, granularity)}</td>
-                        {expenses.some((x) => x.type) && (
-                          <td className="px-4 py-3 text-sm text-gray-600">{e.type || "—"}</td>
-                        )}
+                        <td className="px-4 py-3 text-sm text-gray-600">{e.category || "—"}</td>
                         <td className="px-4 py-3 text-sm text-right font-medium text-gray-800">
                           RWF {parseFloat(e.total_amount).toLocaleString()}
                         </td>
@@ -226,7 +222,7 @@ export default function ExpensesReport() {
                     <tfoot className="bg-gray-50 border-t-2 border-gray-200">
                       <tr>
                         <td className="px-4 py-3 text-sm font-bold text-gray-700">Total</td>
-                        {expenses.some((e) => e.type) && <td />}
+                        <td />
                         <td className="px-4 py-3 text-sm text-right font-bold text-gray-800">{fmtRWF(totalAmount)}</td>
                       </tr>
                     </tfoot>
